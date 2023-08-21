@@ -1,10 +1,9 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
-dotenv.config();
+import { DATABASE_URL } from ".";
 
-const connectDB = async () => {
+const connectToDatabase = async (callback: () => void) => {
   try {
-    await mongoose.connect(process.env.DATABASE_URI, {
+    await mongoose.connect(DATABASE_URL, {
       // useUnifiedTopology: true,
       // useNewUrlParser: true,
     });
@@ -12,6 +11,10 @@ const connectDB = async () => {
   } catch (err) {
     console.error(err);
   }
+  mongoose.connection.once("open", () => {
+    console.log("Connected to MongoDB");
+    callback();
+  });
 };
 
-export default connectDB;
+export default connectToDatabase;

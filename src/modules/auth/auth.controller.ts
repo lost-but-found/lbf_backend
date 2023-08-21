@@ -3,6 +3,7 @@ import sgMail from "@sendgrid/mail";
 import { GenerateOTPService, SendOTPService } from "./auth.service";
 import path from "path";
 import { Request, Response } from "express";
+import { JWT_SECRET_KEY } from "../../config";
 
 const bcrypt = require("bcrypt");
 
@@ -103,22 +104,22 @@ const login = async (req, res) => {
     // create JWTs
     const accessToken = jwt.sign(
       {
-        UserInfo: {
+        user: {
           _id: foundUser._id,
           email: foundUser.email,
         },
       },
-      process.env.ACCESS_TOKEN_SECRET,
+      JWT_SECRET_KEY,
       { expiresIn: "1d" }
     );
     const refreshToken = jwt.sign(
       {
-        UserInfo: {
+        user: {
           _id: foundUser._id,
           email: foundUser.email,
         },
       },
-      process.env.ACCESS_TOKEN_SECRET,
+      JWT_SECRET_KEY,
       { expiresIn: "5d" }
     );
 
@@ -182,7 +183,7 @@ const refreshToken = async (req, res) => {
       {
         email: decoded.email,
       },
-      process.env.ACCESS_TOKEN_SECRET,
+      JWT_SECRET_KEY,
       { expiresIn: "300s" }
     );
     res.json({ accessToken });
@@ -360,14 +361,14 @@ const verifyOTP = async (req: Request, res: Response) => {
       userWithOTP[0].verified = true;
       await userWithOTP[0].save();
       const payload = {
-        UserInfo: {
+        user: {
           _id: userWithOTP[0]._id,
           email: userWithOTP[0].email,
         },
       };
 
       // Sign the access token
-      const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
+      const accessToken = jwt.sign(payload, JWT_SECRET_KEY, {
         expiresIn: "5d", // Access token expires in 1 day
       });
 

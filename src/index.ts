@@ -15,19 +15,21 @@ import verifyJWT from "./middleware/verifyJWT";
 import cookieParser from "cookie-parser";
 import credentials from "./middleware/credentials";
 import mongoose from "mongoose";
-import connectDB from "./config/dbConn";
+import connectToDatabase from "./config/dbConn";
+import { isWhitelisted } from "./modules/auth/auth.middleware";
+import { PORT } from "./config";
 
 /* Sendgrid implementation */
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-const PORT = process.env.PORT || 3500;
-
 // Connect to MongoDB
-connectDB();
+connectToDatabase(() =>
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+);
 
 // Handle options credentials check - before CORS!
 // and fetch cookies credentials requirement
-app.use(credentials);
+app.use(isWhitelisted);
 
 // Cross Origin Resource Sharing
 app.use(cors(corsOptions));
