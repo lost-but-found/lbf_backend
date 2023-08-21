@@ -4,7 +4,7 @@ import ItemModel from "./item.model";
 import { UserModel } from "../user";
 import { CategoryModel } from "../category";
 
-const { uploadImageToCloudinary } = require("../config/cloudinary");
+import { uploadImageToCloudinary } from "../../utils/cloudinary";
 
 const handleAllItems = async (req, res) => {
   const allItems = await ItemModel.find();
