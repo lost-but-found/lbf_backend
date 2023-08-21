@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
-import { DATABASE_URL } from ".";
+import { DATABASE_URL } from "../config";
 
 const connectToDatabase = async (callback: () => void) => {
   try {
+    console.log("Connecting to MongoDB");
     await mongoose.connect(DATABASE_URL, {
       // useUnifiedTopology: true,
       // useNewUrlParser: true,
