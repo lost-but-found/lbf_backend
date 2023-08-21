@@ -5,4 +5,4 @@ const allowedOrigins: string[] = [
   "http://localhost:3900",
 ];
 
-module.exports = allowedOrigins;
+export default allowedOrigins;

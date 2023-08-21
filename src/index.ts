@@ -1,17 +1,21 @@
-require("dotenv").config();
-const express = require("express");
+import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
 const app = express();
-const cors = require("cors");
-const corsOptions = require("./config/corsOptions");
+
+import cors from "cors";
+import corsOptions from "./config/corsOptions";
+
 import path from "path";
 
 import sgMail from "@sendgrid/mail";
 
 import verifyJWT from "./middleware/verifyJWT";
-const cookieParser = require("cookie-parser");
-const credentials = require("./middleware/credentials");
-const mongoose = require("mongoose");
-const connectDB = require("./config/dbConn");
+import cookieParser from "cookie-parser";
+import credentials from "./middleware/credentials";
+import mongoose from "mongoose";
+import connectDB from "./config/dbConn";
 
 /* Sendgrid implementation */
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -40,12 +44,6 @@ import verifyOTPRouter from "./routes/verify-otp";
 import categoryRouter from "./routes/categories/category";
 import bookmarkRouter from "./routes/items/bookmark-item";
 import usersRouter from "./routes/users/user";
-
-const swaggerUi = require("swagger-ui-express");
-const swaggerDoc = require("./swagger"); // Import the Swagger specification
-
-/* Middleware for swagger UI */
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 // Serve static files from the 'Images' directory
 // app.use(
