@@ -1,14 +1,14 @@
 import sgMail from "@sendgrid/mail";
 
 // Function to create random OTP code
-export const GenerateOTPService = () => {
+const generateOTPService = () => {
   const code = Array.from({ length: 6 }, () =>
     Math.floor(Math.random() * 10)
   ).join("");
   return code;
 };
 
-export const SendOTPService = async (email, OTP) => {
+const sendOTPService = async (email, OTP) => {
   const msg = {
     to: email,
     from: "lostbutfounditemsapp@gmail.com",
@@ -21,6 +21,10 @@ export const SendOTPService = async (email, OTP) => {
     console.log(`OTP sent to ${email}`);
   } catch (error) {
     console.error(error + "Error!");
-    throw new Error("Failed to send OTP code");
+    // throw new Error("Failed to send OTP code");
   }
 };
+
+const AuthService = { generateOTPService, sendOTPService };
+
+export default AuthService;

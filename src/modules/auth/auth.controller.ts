@@ -1,9 +1,12 @@
+import { StatusCodes } from "http-status-codes";
 import { UserModel } from "../user";
 import sgMail from "@sendgrid/mail";
-import { GenerateOTPService, SendOTPService } from "./auth.service";
+import AuthService from "./auth.service";
 import path from "path";
 import { Request, Response } from "express";
 import { JWT_SECRET_KEY } from "../../config";
+import { sendResponse } from "../../utils/sendResponse";
+import UserService from "../user/user.service";
 
 const bcrypt = require("bcrypt");
 
@@ -27,7 +30,7 @@ export const resetPassword = async (req, res) => {
       .send({ error: "No user registered with that email or phone number" });
   }
 
-  const token = GenerateOTPService();
+  const token = AuthService.generateOTPService();
 
   const sendToken = async (email, token) => {
     const msg = {
@@ -61,9 +64,19 @@ export const resetPassword = async (req, res) => {
 const sendOTPToUser = async (req, res) => {
   const { email } = req.body;
 
-  let OTP = GenerateOTPService();
   try {
-    SendOTPService(email, OTP);
+    const user = UserModel.find({ email }).exec();
+    if (!user) {
+      return sendResponse({
+        res,
+        status: StatusCodes.NOT_FOUND,
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    let OTP = AuthService.generateOTPService();
+    console.log({ OTP });
 
     //Update OTP of user
     const updatedUserOTP = await UserModel.findOneAndUpdate(
@@ -78,12 +91,22 @@ const sendOTPToUser = async (req, res) => {
     );
 
     console.log(updatedUserOTP);
-    console.log(OTP);
+    AuthService.sendOTPService(email, OTP);
     // return OTP;
-    res.send({ message: "OTP sent successfully" });
+    sendResponse({
+      res,
+      status: StatusCodes.OK,
+      message: "OTP sent successfully",
+      success: true,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).send({ error: "Failed to send OTP code" });
+    sendResponse({
+      res,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "Failed to send OTP code",
+      success: false,
+    });
   }
 };
 
@@ -218,7 +241,7 @@ const handleNewUser = async (req, res) => {
     //encrypt the password
     const hashedPwd = await bcrypt.hash(pwd, 10);
 
-    let OTP = GenerateOTPService();
+    let OTP = AuthService.generateOTPService();
 
     //create and store the new user
     const result = await UserModel.create({
@@ -276,7 +299,7 @@ const register = async (req, res) => {
     //encrypt the password
     const hashedPwd = await bcrypt.hash(pwd, 10);
 
-    let OTP = GenerateOTPService();
+    let OTP = AuthService.generateOTPService();
 
     //create and store the new user
     const result = await UserModel.create({
@@ -309,9 +332,9 @@ const register = async (req, res) => {
 const resendOTP = async (req, res) => {
   const { email } = req.body;
 
-  let OTP = GenerateOTPService();
+  let OTP = AuthService.generateOTPService();
   try {
-    SendOTPService(email, OTP);
+    AuthService.sendOTPService(email, OTP);
 
     //Update OTP of user
     const updatedUserOTP = await UserModel.findOneAndUpdate(
@@ -337,7 +360,8 @@ const resendOTP = async (req, res) => {
 
 const verifyOTP = async (req: Request, res: Response) => {
   const currentTime = Date.now();
-  const { inputedOTP, email } = req.body;
+  const { otp: inputedOTP, email } = req.body;
+  console.log({ inputedOTP, email });
   const twoMinutesAgo = currentTime - 120000; // 2 minutes = 120,000 milliseconds
 
   const userWithOTP = await UserModel.find({
@@ -346,7 +370,16 @@ const verifyOTP = async (req: Request, res: Response) => {
     "tempOTP.OTP": inputedOTP,
   }).exec();
 
-  console.log(userWithOTP);
+  console.log({ userWithOTP });
+
+  if (userWithOTP.length === 0) {
+    return sendResponse({
+      res,
+      status: StatusCodes.NOT_FOUND,
+      message: "OTP code is invalid or expired. Kindly request another.",
+      success: false,
+    });
+  }
 
   // Extract the OTP
   const extractedOTP: number =
@@ -389,6 +422,35 @@ const verifyOTP = async (req: Request, res: Response) => {
   }
 };
 
+const checkIfEmailOrPhoneExists = async (req, res) => {
+  const { email, phone } = req.params;
+
+  try {
+    const user = await UserService.findUserByEmailOrPhone({
+      email,
+      phone: phone,
+    });
+    if (user) {
+      return sendResponse({
+        res,
+        status: 200,
+        message: "User exists",
+        success: true,
+      });
+    } else {
+      // return res.status(404).send({ message: "User does not exist" });
+      return sendResponse({
+        res,
+        status: 404,
+        message: "User does not exist",
+        success: false,
+      });
+    }
+  } catch (error) {
+    res.status(500).send({ error: "Failed to check if user exists" });
+  }
+};
+
 const AuthController = {
   login,
   logout,
@@ -398,6 +460,7 @@ const AuthController = {
   register,
   resendOTP,
   verifyOTP,
+  checkIfEmailOrPhoneExists,
 };
 
 export default AuthController;
