@@ -5,10 +5,16 @@ import { UserModel } from "../user";
 import { CategoryModel } from "../category";
 
 import { uploadImageToCloudinary } from "../../utils/cloudinary";
+import { sendResponse } from "../../utils/sendResponse";
 
 const handleAllItems = async (req, res) => {
   const allItems = await ItemModel.find();
-  res.status(200).send(allItems);
+  return sendResponse({
+    res,
+    message: "All items retrieved!",
+    data: allItems,
+    success: true,
+  });
 };
 
 const handleAllMissingItems = async (req, res) => {
