@@ -4,10 +4,12 @@ interface IUser extends Document {
   fullName: string;
   email: string;
   photo?: string;
-  phoneNumber: string;
+  phone: string;
   password: string;
   personalID: string;
   verified: boolean;
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
   bookmarked?: string[];
   tempOTP: {
     timeStamp: number;
@@ -27,7 +29,7 @@ const userSchema = new Schema({
     unique: true,
   },
   photo: String,
-  phoneNumber: {
+  phone: {
     type: String,
     unique: true,
     required: true,
@@ -35,6 +37,8 @@ const userSchema = new Schema({
   personalID: {
     type: String,
   },
+  isEmailVerified: { type: Boolean, default: false },
+  isPhoneVerified: { type: Boolean, default: false },
   password: {
     type: String,
     required: true,

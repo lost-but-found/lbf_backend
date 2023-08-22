@@ -1,12 +1,12 @@
 import { StatusCodes } from "http-status-codes";
-import { UserModel } from "../user";
 import sgMail from "@sendgrid/mail";
 import AuthService from "./auth.service";
 import path from "path";
 import { Request, Response } from "express";
 import { JWT_SECRET_KEY } from "../../config";
 import { sendResponse } from "../../utils/sendResponse";
-import UserService from "../user/user.service";
+import { UserModel, UserService } from "../user";
+import { OTPTokenService } from "../otpToken";
 
 const bcrypt = require("bcrypt");
 
@@ -65,7 +65,7 @@ const sendOTPToUser = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const user = UserModel.find({ email }).exec();
+    const user = await UserModel.findOne({ email }).exec();
     if (!user) {
       return sendResponse({
         res,
@@ -75,7 +75,7 @@ const sendOTPToUser = async (req, res) => {
       });
     }
 
-    let OTP = AuthService.generateOTPService();
+    let OTP = OTPTokenService.generateOTP(user._id, "emailVerification");
     console.log({ OTP });
 
     //Update OTP of user
