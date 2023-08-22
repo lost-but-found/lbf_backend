@@ -1,4 +1,5 @@
 import sgMail from "@sendgrid/mail";
+import { OTPTokenService } from "../otpToken";
 
 // Function to create random OTP code
 const generateOTPService = () => {
@@ -24,6 +25,20 @@ const sendOTPService = async (email, OTP) => {
     // throw new Error("Failed to send OTP code");
   }
 };
+
+export async function verifyUserEmail(
+  userId: string,
+  token: string
+): Promise<boolean> {
+  return OTPTokenService.verifyOTP(userId, token, "emailVerification");
+}
+
+export async function verifyUserPhone(
+  userId: string,
+  token: string
+): Promise<boolean> {
+  return OTPTokenService.verifyOTP(userId, token, "phoneVerification");
+}
 
 const AuthService = { generateOTPService, sendOTPService };
 

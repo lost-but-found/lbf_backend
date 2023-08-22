@@ -12,7 +12,7 @@ const getAllUsers = async (req: Request, res: Response) => {
 };
 
 const updateUser = async (req, res) => {
-  const { email, phoneNumber } = req.body;
+  const { email, phone } = req.body;
 
   const profileImg: string | undefined = req.file?.path;
 
@@ -25,7 +25,7 @@ const updateUser = async (req, res) => {
     const user = await User.findById(userId);
 
     user.email = email;
-    user.phoneNumber = phoneNumber;
+    user.phone = phone;
     user.photo = normalizedProfileImagePath;
     await user.save();
   } catch (error) {

@@ -1,12 +1,12 @@
 import { StatusCodes } from "http-status-codes";
-import { UserModel } from "../user";
 import sgMail from "@sendgrid/mail";
-import AuthService from "./auth.service";
+import AuthService, { verifyUserEmail, verifyUserPhone } from "./auth.service";
 import path from "path";
 import { Request, Response } from "express";
 import { JWT_SECRET_KEY } from "../../config";
 import { sendResponse } from "../../utils/sendResponse";
-import UserService from "../user/user.service";
+import { UserModel, UserService } from "../user";
+import { OTPTokenService } from "../otpToken";
 
 const bcrypt = require("bcrypt");
 
@@ -65,7 +65,7 @@ const sendOTPToUser = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const user = UserModel.find({ email }).exec();
+    const user = await UserModel.findOne({ email }).exec();
     if (!user) {
       return sendResponse({
         res,
@@ -75,7 +75,7 @@ const sendOTPToUser = async (req, res) => {
       });
     }
 
-    let OTP = AuthService.generateOTPService();
+    let OTP = OTPTokenService.generateOTP(user._id, "emailVerification");
     console.log({ OTP });
 
     //Update OTP of user
@@ -358,67 +358,74 @@ const resendOTP = async (req, res) => {
   }
 };
 
-const verifyOTP = async (req: Request, res: Response) => {
-  const currentTime = Date.now();
-  const { otp: inputedOTP, email } = req.body;
-  console.log({ inputedOTP, email });
-  const twoMinutesAgo = currentTime - 120000; // 2 minutes = 120,000 milliseconds
+const verifyEmailOTP = async (
+  req: Request & {
+    userId: string;
+  },
+  res: Response
+) => {
+  const { token } = req.body;
 
-  const userWithOTP = await UserModel.find({
-    email: email,
-    "tempOTP.timeStamp": { $gt: twoMinutesAgo },
-    "tempOTP.OTP": inputedOTP,
-  }).exec();
-
-  console.log({ userWithOTP });
-
-  if (userWithOTP.length === 0) {
-    return sendResponse({
+  const isVerified = await verifyUserEmail(req.userId, token);
+  if (isVerified) {
+    // Update user's email verification status
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      req.userId,
+      { isEmailVerified: true },
+      { new: true }
+    );
+    console.log("Email verified successfully");
+    sendResponse({
       res,
-      status: StatusCodes.NOT_FOUND,
-      message: "OTP code is invalid or expired. Kindly request another.",
+      status: StatusCodes.OK,
+      message: "Email verified successfully",
+      success: true,
+      data: updatedUser,
+    });
+  } else {
+    console.log("Invalid or expired token");
+    sendResponse({
+      res,
+      status: StatusCodes.BAD_REQUEST,
+      message: "Invalid or expired token",
       success: false,
     });
   }
+};
 
-  // Extract the OTP
-  const extractedOTP: number =
-    userWithOTP.length > 0 ? Number(userWithOTP[0].tempOTP.OTP) : null;
+const verifyPhoneOTP = async (
+  req: Request & {
+    userId: string;
+  },
+  res: Response
+) => {
+  const { token } = req.body;
 
-  console.log(typeof extractedOTP);
+  const isVerified = await verifyUserPhone(req.userId, token);
+  if (isVerified) {
+    // Update user's phone verification status
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      req.userId,
+      { isPhoneVerified: true },
+      { new: true }
+    );
 
-  try {
-    if (!extractedOTP) {
-      res.status(404).send({ error: "not found" });
-    } else if (Number(inputedOTP) === extractedOTP) {
-      userWithOTP[0].verified = true;
-      await userWithOTP[0].save();
-      const payload = {
-        user: {
-          _id: userWithOTP[0]._id,
-          email: userWithOTP[0].email,
-        },
-      };
-
-      // Sign the access token
-      const accessToken = jwt.sign(payload, JWT_SECRET_KEY, {
-        expiresIn: "5d", // Access token expires in 1 day
-      });
-
-      // Return the access token to the user
-      return res.send({
-        message: "OTP code is valid. Email verification complete.",
-        accessToken,
-      });
-    } else if (inputedOTP !== extractedOTP) {
-      res.status(400).send({
-        error: "OTP code is invalid or expired. Kindly request another.",
-      });
-    } else if (!userWithOTP) {
-      res.status(404).send({ error: "User not found" });
-    }
-  } catch (error) {
-    res.status(500).send({ error: "Failed to verify OTP code" });
+    console.log("Phone number verified successfully");
+    sendResponse({
+      res,
+      status: StatusCodes.OK,
+      message: "Phone number verified successfully",
+      success: true,
+      data: updatedUser,
+    });
+  } else {
+    console.log("Invalid or expired token");
+    sendResponse({
+      res,
+      status: StatusCodes.BAD_REQUEST,
+      message: "Invalid or expired token",
+      success: false,
+    });
   }
 };
 
@@ -459,7 +466,8 @@ const AuthController = {
   refreshToken,
   register,
   resendOTP,
-  verifyOTP,
+  verifyEmailOTP,
+  verifyPhoneOTP,
   checkIfEmailOrPhoneExists,
 };
 
