@@ -14,6 +14,7 @@ AuthRouter.get("/refresh-token", AuthController.refreshToken);
 // OTP
 AuthRouter.post("/otp", AuthController.sendOTPToUser);
 AuthRouter.post("/otp/resend", AuthController.resendOTP);
-AuthRouter.post("/otp/verify", AuthController.verifyOTP);
+AuthRouter.post("/otp/verify/email", AuthController.verifyEmailOTP);
+AuthRouter.post("/otp/verify/phone", AuthController.verifyPhoneOTP);
 
 export default AuthRouter;
