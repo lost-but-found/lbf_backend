@@ -25,31 +25,31 @@ export const registerUserSchema = object({
   //     message: "Passwords do not match",
   //     path: ["passwordConfirmation"],
   //   }),
-  file: object({
-    fieldname: string({
-      required_error: "fieldname is required",
-    }),
-    originalname: string({
-      required_error: "originalname is required",
-    }),
-    encoding: string({
-      required_error: "encoding is required",
-    }),
-    mimetype: string({
-      required_error: "mimetype is required",
-    }),
-    buffer: any({
-      required_error: "buffer is required",
-    }),
-  })
-    .refine((data) => data.mimetype.includes("image"), {
-      message: "File must be an image",
-      path: ["mimetype"],
-    })
-    .refine((data) => data.fieldname === "photo", {
-      message: "File must be a photo",
-      path: ["fieldname"],
-    }),
+  // file: object({
+  //   fieldname: string({
+  //     required_error: "fieldname is required",
+  //   }),
+  //   originalname: string({
+  //     required_error: "originalname is required",
+  //   }),
+  //   encoding: string({
+  //     required_error: "encoding is required",
+  //   }),
+  //   mimetype: string({
+  //     required_error: "mimetype is required",
+  //   }),
+  //   buffer: any({
+  //     required_error: "buffer is required",
+  //   }),
+  // })
+  //   .refine((data) => data.mimetype.includes("image"), {
+  //     message: "File must be an image",
+  //     path: ["mimetype"],
+  //   })
+  //   .refine((data) => data.fieldname === "photo", {
+  //     message: "File must be a photo",
+  //     path: ["fieldname"],
+  //   }),
 });
 
 export type RegisterUserInput = Omit<

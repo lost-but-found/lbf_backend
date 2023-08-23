@@ -2,7 +2,12 @@ import express, { Router } from "express";
 import AuthController from "./auth.controller";
 import upload from "../../middleware/upload";
 import validateRequest from "../../middleware/validateRequest";
-import { registerUserSchema } from "./auth.schema";
+import { registerUserSchema } from "./schemas/register.schema";
+import {
+  changePasswordSchema,
+  requestChangePasswordSchema,
+  verifyChangePasswordRequestSchema,
+} from "./schemas/forgot-password.schema";
 
 const AuthRouter: Router = express.Router();
 
@@ -26,5 +31,22 @@ AuthRouter.post("/otp/resend", AuthController.resendOTP);
 AuthRouter.post("/otp/email/verify", AuthController.verifyEmailOTP);
 // @ts-ignore
 AuthRouter.post("/otp/phone/verify", AuthController.verifyPhoneOTP);
+
+// Forgot password
+AuthRouter.post(
+  "/forgot-password",
+  validateRequest(requestChangePasswordSchema),
+  AuthController.requestPasswordReset
+);
+AuthRouter.post(
+  "/forgot-password/verify",
+  validateRequest(verifyChangePasswordRequestSchema),
+  AuthController.verifyPasswordReset
+);
+AuthRouter.post(
+  "/forgot-password/change",
+  validateRequest(changePasswordSchema),
+  AuthController.resetPassword
+);
 
 export default AuthRouter;

@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import sgMail from "@sendgrid/mail";
-import AuthService, { verifyUserEmail, verifyUserPhone } from "./auth.service";
+import AuthService from "./auth.service";
 import path from "path";
 import { Request, Response } from "express";
 import { JWT_SECRET_KEY } from "../../config";
@@ -12,55 +12,6 @@ const bcrypt = require("bcrypt");
 
 const jwt = require("jsonwebtoken");
 
-export const resetPassword = async (req: Request, res: Response) => {
-  const { email, phone } = req.body;
-
-  let user;
-  if (email) {
-    user = await UserModel.findOne({ email });
-  } else if (phone) {
-    user = await UserModel.findOne({ phone });
-  } else {
-    return res.status(400).send({ error: "Invalid request" });
-  }
-
-  if (!user) {
-    return res
-      .status(404)
-      .send({ error: "No user registered with that email or phone number" });
-  }
-
-  const token = AuthService.generateOTPService();
-
-  const sendToken = async (email: string, token: string) => {
-    const msg = {
-      to: email,
-      from: "lostbutfounditemsapp@gmail.com",
-      subject: "Reset Your Password",
-      text: `Your Password reset code is: ${token}`,
-    };
-
-    try {
-      await sgMail.send(msg);
-      console.log(`Token sent to ${email}`);
-    } catch (error) {
-      console.error(error + "Error!");
-      throw new Error("Failed to send OTP code");
-    }
-  };
-
-  try {
-    await sendToken(user.email, token);
-    // Store the generated token in the user model
-    // user.resetToken = token;
-    // await user.save();
-    res.status(200).send({ message: "Password reset code sent successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ error: "An error occurred" });
-  }
-};
-
 const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -70,7 +21,13 @@ const login = async (req: Request, res: Response) => {
   const foundUser = await UserModel.findOne({ email }).exec();
   console.log(foundUser);
 
-  if (!foundUser) return res.status(401).send({ message: "Unauthorized" }); //Unauthorized
+  if (!foundUser)
+    return sendResponse({
+      res,
+      status: StatusCodes.NOT_FOUND,
+      message: "User not found",
+      success: false,
+    });
 
   // evaluate password
   const match = await bcrypt.compare(password, foundUser.password);
@@ -110,23 +67,45 @@ const login = async (req: Request, res: Response) => {
     });
 
     const { password, ...restUserProps } = foundUser.toObject();
-    res.json({ user: restUserProps, accessToken });
+    sendResponse({
+      res,
+      status: StatusCodes.OK,
+      message: "Login successful",
+      success: true,
+      data: { user: restUserProps, accessToken },
+    });
   } else {
-    res.status(401).send({ message: "Incorrect username or password" });
+    sendResponse({
+      res,
+      status: StatusCodes.UNAUTHORIZED,
+      message: "Incorrect username or password",
+      success: false,
+    });
   }
 };
 
 const logout = async (req: Request, res: Response) => {
   // On client, also delete the accessToken
   const cookies = req.cookies;
-  if (!cookies?.jwt) return res.sendStatus(204); //No content
+  if (!cookies?.jwt)
+    return sendResponse({
+      res,
+      status: StatusCodes.NO_CONTENT,
+      message: "No content",
+      success: false,
+    }); //No content
   const refreshToken = cookies.jwt;
 
   // Is refreshToken in db?
   const foundUser = await UserModel.findOne({ refreshToken }).exec();
   if (!foundUser) {
     res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true });
-    return res.sendStatus(204);
+    return sendResponse({
+      res,
+      status: StatusCodes.NO_CONTENT,
+      message: "No content",
+      success: false,
+    }); //No content
   }
 
   // Delete refreshToken in db
@@ -135,20 +114,41 @@ const logout = async (req: Request, res: Response) => {
   console.log(result);
 
   res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true });
-  res.sendStatus(204);
+  return sendResponse({
+    res,
+    status: StatusCodes.NO_CONTENT,
+    message: "No content",
+    success: false,
+  }); //No content
 };
 
 const refreshToken = async (req: Request, res: Response) => {
   const cookies = req.cookies;
   console.log(cookies);
-  if (!cookies?.jwt) return res.sendStatus(401);
+
+  if (!cookies?.jwt) {
+    return sendResponse({
+      res,
+      status: StatusCodes.UNAUTHORIZED,
+      message: "Unauthorized",
+      success: false,
+    }); //Unauthorized
+  }
+
   const refreshToken = cookies.jwt;
 
   const foundUser = await UserModel.findOne({
     refreshToken: refreshToken,
   }).exec();
 
-  if (!foundUser) return res.sendStatus(403); //Forbidden
+  if (!foundUser) {
+    return sendResponse({
+      res,
+      status: StatusCodes.FORBIDDEN,
+      message: "Forbidden",
+      success: false,
+    }); //Forbidden
+  }
 
   // evaluate jwt
   jwt.verify(
@@ -161,7 +161,12 @@ const refreshToken = async (req: Request, res: Response) => {
       }
     ) => {
       if (err || foundUser.email !== decoded.email)
-        return res.json({ message: "No match!" }); // res.sendStatus(403);
+        return sendResponse({
+          res,
+          status: StatusCodes.FORBIDDEN,
+          message: "Forbidden",
+          success: false,
+        }); //Forbidden
 
       const accessToken = jwt.sign(
         {
@@ -170,14 +175,20 @@ const refreshToken = async (req: Request, res: Response) => {
         JWT_SECRET_KEY,
         { expiresIn: "300s" }
       );
-      res.json({ accessToken });
+      sendResponse({
+        res,
+        status: StatusCodes.OK,
+        message: "OK",
+        success: true,
+        data: { accessToken },
+      });
     }
   );
 };
 
 const register = async (req: Request, res: Response) => {
   const { name, email, password, phone } = req.body;
-  const photo = req.file;
+  // const photo = req.file;
   // check for duplicate email or phone number in the db
   const duplicateEmail = await UserModel.findOne({ email }).exec();
   if (duplicateEmail) {
@@ -203,7 +214,7 @@ const register = async (req: Request, res: Response) => {
   // const normalizedProfileImagePath = profileImg?.split(path.sep).join("/");
 
   try {
-    //encrypt the password
+    //hash the password
     const hashedPwd = await bcrypt.hash(password, 10);
 
     let OTP = AuthService.generateOTPService();
@@ -214,11 +225,7 @@ const register = async (req: Request, res: Response) => {
       email,
       password: hashedPwd,
       phone,
-      photo: "normalizedProfileImagePath",
-      tempOTP: {
-        timeStamp: Date.now(),
-        OTP: OTP,
-      },
+      // photo: "normalizedProfileImagePath",
     });
     console.log(result);
 
@@ -230,9 +237,21 @@ const register = async (req: Request, res: Response) => {
     };
     await sgMail.send(msg);
     console.log(`OTP sent to ${email}`);
-    res.status(201).json({ success: `New user created!`, userId: result._id });
+
+    return sendResponse({
+      res,
+      status: StatusCodes.CREATED,
+      message: "New user created!",
+      success: true,
+      data: { userId: result._id },
+    });
   } catch (err: any) {
-    res.status(500).json({ message: err.message });
+    return sendResponse({
+      res,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: err.message,
+      success: false,
+    });
   }
 };
 
@@ -258,10 +277,22 @@ const resendOTP = async (req: Request, res: Response) => {
     console.log(updatedUserOTP);
     console.log(OTP);
     // return OTP;
-    res.send({ message: "OTP sent successfully" });
+
+    sendResponse({
+      res,
+      status: StatusCodes.OK,
+      message: "OTP sent successfully",
+      success: true,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).send({ error: "Failed to send OTP code" });
+
+    sendResponse({
+      res,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "Failed to send OTP code",
+      success: false,
+    });
   }
 };
 
@@ -382,7 +413,7 @@ const verifyEmailOTP = async (
     });
   }
 
-  const isVerified = await verifyUserEmail(user._id, token);
+  const isVerified = await AuthService.verifyUserEmail(user._id, token);
   if (isVerified) {
     // Update user's email verification status
     const updatedUser = await UserModel.findByIdAndUpdate(
@@ -428,7 +459,7 @@ const verifyPhoneOTP = async (
     });
   }
 
-  const isVerified = await verifyUserPhone(user._id, token);
+  const isVerified = await AuthService.verifyUserPhone(user._id, token);
   if (isVerified) {
     // Update user's phone verification status
     const updatedUser = await UserModel.findByIdAndUpdate(
@@ -472,7 +503,6 @@ const checkIfEmailOrPhoneExists = async (req: Request, res: Response) => {
         success: true,
       });
     } else {
-      // return res.status(404).send({ message: "User does not exist" });
       return sendResponse({
         res,
         status: 404,
@@ -481,7 +511,128 @@ const checkIfEmailOrPhoneExists = async (req: Request, res: Response) => {
       });
     }
   } catch (error) {
-    res.status(500).send({ error: "Failed to check if user exists" });
+    sendResponse({
+      res,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "Failed to check if user exists",
+      success: false,
+    });
+  }
+};
+
+const requestPasswordReset = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  try {
+    const user = await UserModel.findOne({ email }).exec();
+    if (!user) {
+      return sendResponse({
+        res,
+        status: StatusCodes.NOT_FOUND,
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    let OTP = await OTPTokenService.generateOTP(user._id, "passwordReset");
+    console.log({ OTP });
+
+    AuthService.sendOTPService(email, OTP);
+    // return OTP;
+    sendResponse({
+      res,
+      status: StatusCodes.OK,
+      message: "OTP sent successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+    sendResponse({
+      res,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "Failed to send OTP code",
+      success: false,
+    });
+  }
+};
+
+const verifyPasswordReset = async (req: Request, res: Response) => {
+  const { otp } = req.body;
+
+  const isVerified = await AuthService.verifyPasswordReset(otp);
+  if (isVerified) {
+    console.log("OTP verified successfully");
+    sendResponse({
+      res,
+      status: StatusCodes.OK,
+      message: "OTP verified successfully",
+      success: true,
+    });
+  } else {
+    console.log("Invalid or expired token");
+    sendResponse({
+      res,
+      status: StatusCodes.BAD_REQUEST,
+      message: "Invalid or expired token",
+      success: false,
+    });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { password: newPassword, otp } = req.body;
+  try {
+    const otpToken = await AuthService.verifyPasswordReset(otp);
+    console.log({ otpToken });
+    if (!otpToken) {
+      return sendResponse({
+        res,
+        status: StatusCodes.BAD_REQUEST,
+        message: "Invalid or expired token",
+        success: false,
+      });
+    }
+
+    const user = await UserModel.findById(otpToken.userId).exec();
+
+    if (!user) {
+      // return res
+      //   .status(404)
+      //   .send({ error: "No user registered with that email or phone number" });
+      return sendResponse({
+        res,
+        status: StatusCodes.NOT_FOUND,
+        message: "No such registered user",
+        success: false,
+      });
+    }
+
+    //hash the password
+    const hashedPwd = await bcrypt.hash(newPassword, 10);
+
+    // Update user's password
+    user.password = hashedPwd;
+    const { password, ...updatedUser } = (await user.save()).toObject();
+
+    // Delete the otpToken
+    await OTPTokenService.deleteOTP(otpToken.token, "passwordReset");
+
+    sendResponse({
+      res,
+      status: StatusCodes.OK,
+      message: "Password reset successfully",
+      success: true,
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error(error);
+
+    sendResponse({
+      res,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "An error occurred while resetting password",
+      success: false,
+    });
   }
 };
 
@@ -489,10 +640,12 @@ const AuthController = {
   login,
   logout,
   resetPassword,
+  requestPasswordReset,
   sendEmailOTP,
   sendPhoneOTP,
   refreshToken,
   register,
+  verifyPasswordReset,
   resendOTP,
   verifyEmailOTP,
   verifyPhoneOTP,
