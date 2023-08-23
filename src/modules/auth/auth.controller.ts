@@ -13,13 +13,13 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 export const resetPassword = async (req, res) => {
-  const { email, phoneNumber } = req.body;
+  const { email, phone } = req.body;
 
   let user;
   if (email) {
     user = await UserModel.findOne({ email });
-  } else if (phoneNumber) {
-    user = await UserModel.findOne({ phoneNumber });
+  } else if (phone) {
+    user = await UserModel.findOne({ phone });
   } else {
     return res.status(400).send({ error: "Invalid request" });
   }
@@ -111,8 +111,8 @@ const sendOTPToUser = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  const { email, pwd } = req.body;
-  if (!email || !pwd)
+  const { email, password } = req.body;
+  if (!email || !password)
     return res
       .status(400)
       .json({ message: "Email and password are required." });
@@ -122,7 +122,7 @@ const login = async (req, res) => {
   if (!foundUser) return res.status(401).send({ message: "Unauthorized" }); //Unauthorized
 
   // evaluate password
-  const match = await bcrypt.compare(pwd, foundUser.password);
+  const match = await bcrypt.compare(password, foundUser.password);
   if (match) {
     // create JWTs
     const accessToken = jwt.sign(
@@ -214,8 +214,8 @@ const refreshToken = async (req, res) => {
 };
 
 const handleNewUser = async (req, res) => {
-  const { fullName, email, pwd, phoneNumber } = req.body;
-  if (!email || !pwd || !fullName || !phoneNumber)
+  const { name, email, password, phone } = req.body;
+  if (!email || !password || !name || !phone)
     return res.status(400).json({ message: "Please fill in all details" });
 
   // check for duplicate usernames in the db
@@ -225,7 +225,7 @@ const handleNewUser = async (req, res) => {
       .status(409)
       .send({ error: "Email already registered by another user." });
 
-  const duplicateNumber = await UserModel.findOne({ phoneNumber }).exec();
+  const duplicateNumber = await UserModel.findOne({ phone }).exec();
   if (duplicateNumber)
     return res
       .status(409)
@@ -239,16 +239,16 @@ const handleNewUser = async (req, res) => {
 
   try {
     //encrypt the password
-    const hashedPwd = await bcrypt.hash(pwd, 10);
+    const hashedPwd = await bcrypt.hash(password, 10);
 
     let OTP = AuthService.generateOTPService();
 
     //create and store the new user
     const result = await UserModel.create({
-      fullName,
+      name,
       email,
       password: hashedPwd,
-      phoneNumber,
+      phone,
       photo: normalizedProfileImagePath,
       tempOTP: {
         timeStamp: Date.now(),
@@ -271,43 +271,47 @@ const handleNewUser = async (req, res) => {
   }
 };
 
-const register = async (req, res) => {
-  const { fullName, email, pwd, phoneNumber } = req.body;
-  if (!email || !pwd || !fullName || !phoneNumber)
-    return res.status(400).json({ message: "Please fill in all details" });
-
+const register = async (req: Request, res: Response) => {
+  const { name, email, password, phone } = req.body;
+  const photo = req.file;
   // check for duplicate usernames in the db
+  // @ts-ignore
   const duplicateEmail = await UserModel.findOne({ email }).exec();
-  if (duplicateEmail)
-    return res
-      .status(409)
-      .send({ error: "Email already registered by another user." });
+  if (duplicateEmail) {
+    return sendResponse({
+      res,
+      status: StatusCodes.CONFLICT,
+      message: "Email already registered by another user.",
+      success: false,
+    });
+  }
 
-  const duplicateNumber = await UserModel.findOne({ phoneNumber }).exec();
+  const duplicateNumber = await UserModel.findOne({ phone }).exec();
   if (duplicateNumber)
-    return res
-      .status(409)
-      .send({ error: "Phone number already registered by another user." });
-
-  const profileImg: string | undefined = req.file?.path;
+    return sendResponse({
+      res,
+      status: StatusCodes.CONFLICT,
+      message: "Phone number already registered by another user.",
+      success: false,
+    });
 
   /* Normalize the image path using path module. Without this, Windows will make use of
   backward slashes which is not readable by web systems and other OSs */
-  const normalizedProfileImagePath = profileImg?.split(path.sep).join("/");
+  // const normalizedProfileImagePath = profileImg?.split(path.sep).join("/");
 
   try {
     //encrypt the password
-    const hashedPwd = await bcrypt.hash(pwd, 10);
+    const hashedPwd = await bcrypt.hash(password, 10);
 
     let OTP = AuthService.generateOTPService();
 
     //create and store the new user
     const result = await UserModel.create({
-      fullName,
+      name,
       email,
       password: hashedPwd,
-      phoneNumber,
-      photo: normalizedProfileImagePath,
+      phone,
+      photo: "normalizedProfileImagePath",
       tempOTP: {
         timeStamp: Date.now(),
         OTP: OTP,
