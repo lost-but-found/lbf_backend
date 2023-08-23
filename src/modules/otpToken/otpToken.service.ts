@@ -21,34 +21,70 @@ async function generateOTP(
   return token;
 }
 
-async function verifyOTP(
-  userId: string,
-  token: string,
-  type: OTPToken["type"]
-): Promise<boolean> {
-  // const otpToken = await OTPTokenModel.findOne({
-  //   userId,
-  //   token,
-  //   type,
-  //   expiresAt: { $gt: new Date() }, // Check if token is not expired
-  // });
-
-  await OTPTokenModel.deleteOne({
+async function verifyOTP({
+  token,
+  type,
+  userId,
+  deleteOnVerify = true,
+}: {
+  token: string;
+  type: OTPToken["type"];
+  userId?: string;
+  deleteOnVerify?: boolean;
+}): Promise<boolean> {
+  const otpToken = await OTPTokenModel.findOne({
     userId,
     token,
     type,
     expiresAt: { $gt: new Date() }, // Check if token is not expired
   });
-  return true;
-  // if (otpToken) {
-  // }
 
-  // return false;
+  if (!otpToken) {
+    return false;
+  }
+
+  if (deleteOnVerify) await OTPTokenModel.deleteOne({ _id: otpToken._id });
+  return true;
+}
+
+async function getOTP(
+  token: string,
+  type: OTPToken["type"]
+): Promise<OTPToken | null> {
+  const otpToken = await OTPTokenModel.findOne({
+    token,
+    type,
+    expiresAt: { $gt: new Date() }, // Check if token is not expired
+  });
+
+  if (!otpToken) {
+    return null;
+  }
+
+  return otpToken;
+}
+
+async function deleteOTP(token: string, type: OTPToken["type"]): Promise<void> {
+  const otpToken = await OTPTokenModel.findOne({
+    token,
+    type,
+    expiresAt: { $gt: new Date() }, // Check if token is not expired
+  });
+
+  console.log("otpToken", otpToken);
+
+  if (!otpToken) {
+    return;
+  }
+
+  await OTPTokenModel.deleteOne({ _id: otpToken._id });
 }
 
 const OTPTokenService = {
   generateOTP,
   verifyOTP,
+  getOTP,
+  deleteOTP,
 };
 
 export default OTPTokenService;
