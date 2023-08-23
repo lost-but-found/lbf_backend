@@ -61,55 +61,6 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
 };
 
-const sendOTPToUser = async (req: Request, res: Response) => {
-  const { email } = req.body;
-
-  try {
-    const user = await UserModel.findOne({ email }).exec();
-    if (!user) {
-      return sendResponse({
-        res,
-        status: StatusCodes.NOT_FOUND,
-        message: "User not found",
-        success: false,
-      });
-    }
-
-    let OTP = await OTPTokenService.generateOTP(user._id, "emailVerification");
-    console.log({ OTP });
-
-    //Update OTP of user
-    const updatedUserOTP = await UserModel.findOneAndUpdate(
-      { email },
-      {
-        $set: {
-          "tempOTP.OTP": String(OTP),
-          "tempOTP.timeStamp": Date.now(),
-        },
-      },
-      { new: true }
-    );
-
-    console.log(updatedUserOTP);
-    AuthService.sendOTPService(email, OTP);
-    // return OTP;
-    sendResponse({
-      res,
-      status: StatusCodes.OK,
-      message: "OTP sent successfully",
-      success: true,
-    });
-  } catch (error) {
-    console.error(error);
-    sendResponse({
-      res,
-      status: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: "Failed to send OTP code",
-      success: false,
-    });
-  }
-};
-
 const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -157,7 +108,9 @@ const login = async (req: Request, res: Response) => {
       //   secure: true,
       maxAge: 24 * 60 * 60 * 1000,
     });
-    res.json({ userId: foundUser._id, accessToken });
+
+    const { password, ...restUserProps } = foundUser.toObject();
+    res.json({ user: restUserProps, accessToken });
   } else {
     res.status(401).send({ message: "Incorrect username or password" });
   }
@@ -222,69 +175,10 @@ const refreshToken = async (req: Request, res: Response) => {
   );
 };
 
-const handleNewUser = async (req: Request, res: Response) => {
-  const { name, email, password, phone } = req.body;
-  if (!email || !password || !name || !phone)
-    return res.status(400).json({ message: "Please fill in all details" });
-
-  // check for duplicate usernames in the db
-  const duplicateEmail = await UserModel.findOne({ email }).exec();
-  if (duplicateEmail)
-    return res
-      .status(409)
-      .send({ error: "Email already registered by another user." });
-
-  const duplicateNumber = await UserModel.findOne({ phone }).exec();
-  if (duplicateNumber)
-    return res
-      .status(409)
-      .send({ error: "Phone number already registered by another user." });
-
-  const profileImg: string | undefined = req.file?.path;
-
-  /* Normalize the image path using path module. Without this, Windows will make use of
-  backward slashes which is not readable by web systems and other OSs */
-  const normalizedProfileImagePath = profileImg?.split(path.sep).join("/");
-
-  try {
-    //encrypt the password
-    const hashedPwd = await bcrypt.hash(password, 10);
-
-    let OTP = AuthService.generateOTPService();
-
-    //create and store the new user
-    const result = await UserModel.create({
-      name,
-      email,
-      password: hashedPwd,
-      phone,
-      photo: normalizedProfileImagePath,
-      tempOTP: {
-        timeStamp: Date.now(),
-        OTP: OTP,
-      },
-    });
-    console.log(result);
-
-    const msg = {
-      to: email,
-      from: "lostbutfounditemsapp@gmail.com",
-      subject: "LostButFound Verification Code",
-      text: `Your OTP code is ${OTP}`,
-    };
-    await sgMail.send(msg);
-    console.log(`OTP sent to ${email}`);
-    res.status(201).json({ success: `New user created!`, userId: result._id });
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
 const register = async (req: Request, res: Response) => {
   const { name, email, password, phone } = req.body;
   const photo = req.file;
-  // check for duplicate usernames in the db
-  // @ts-ignore
+  // check for duplicate email or phone number in the db
   const duplicateEmail = await UserModel.findOne({ email }).exec();
   if (duplicateEmail) {
     return sendResponse({
@@ -371,19 +265,128 @@ const resendOTP = async (req: Request, res: Response) => {
   }
 };
 
+const sendEmailOTP = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  try {
+    const user = await UserModel.findOne({ email }).exec();
+    if (!user) {
+      return sendResponse({
+        res,
+        status: StatusCodes.NOT_FOUND,
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    let OTP = await OTPTokenService.generateOTP(user._id, "emailVerification");
+    console.log({ OTP });
+
+    //Update OTP of user
+    const updatedUserOTP = await UserModel.findOneAndUpdate(
+      { email },
+      {
+        $set: {
+          "tempOTP.OTP": String(OTP),
+          "tempOTP.timeStamp": Date.now(),
+        },
+      },
+      { new: true }
+    );
+
+    console.log(updatedUserOTP);
+    AuthService.sendOTPService(email, OTP);
+    // return OTP;
+    sendResponse({
+      res,
+      status: StatusCodes.OK,
+      message: "OTP sent successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+    sendResponse({
+      res,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "Failed to send OTP code",
+      success: false,
+    });
+  }
+};
+
+const sendPhoneOTP = async (req: Request, res: Response) => {
+  const { phone } = req.body;
+
+  try {
+    const user = await UserModel.findOne({ phone }).exec();
+    if (!user) {
+      return sendResponse({
+        res,
+        status: StatusCodes.NOT_FOUND,
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    let OTP = await OTPTokenService.generateOTP(user._id, "phoneVerification");
+    console.log({ OTP });
+
+    //Update OTP of user
+    const updatedUserOTP = await UserModel.findOneAndUpdate(
+      { phone },
+      {
+        $set: {
+          "tempOTP.OTP": String(OTP),
+          "tempOTP.timeStamp": Date.now(),
+        },
+      },
+      { new: true }
+    );
+
+    console.log(updatedUserOTP);
+    AuthService.sendOTPService(phone, OTP);
+    // return OTP;
+    sendResponse({
+      res,
+      status: StatusCodes.OK,
+      message: "OTP sent successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+    sendResponse({
+      res,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "Failed to send OTP code",
+      success: false,
+    });
+  }
+};
+
 const verifyEmailOTP = async (
   req: Request & {
     userId: string;
   },
   res: Response
 ) => {
-  const { token } = req.body;
+  const { token, email } = req.body;
 
-  const isVerified = await verifyUserEmail(req.userId, token);
+  const user = await UserModel.findOne({ email }).exec();
+
+  if (!user) {
+    return sendResponse({
+      res,
+      status: StatusCodes.NOT_FOUND,
+      message: "User does not exist",
+      success: false,
+    });
+  }
+
+  const isVerified = await verifyUserEmail(user._id, token);
   if (isVerified) {
     // Update user's email verification status
     const updatedUser = await UserModel.findByIdAndUpdate(
-      req.userId,
+      user._id,
       { isEmailVerified: true },
       { new: true }
     );
@@ -412,13 +415,24 @@ const verifyPhoneOTP = async (
   },
   res: Response
 ) => {
-  const { token } = req.body;
+  const { token, phone } = req.body;
 
-  const isVerified = await verifyUserPhone(req.userId, token);
+  const user = await UserModel.findOne({ phone }).exec();
+
+  if (!user) {
+    return sendResponse({
+      res,
+      status: StatusCodes.NOT_FOUND,
+      message: "User does not exist",
+      success: false,
+    });
+  }
+
+  const isVerified = await verifyUserPhone(user._id, token);
   if (isVerified) {
     // Update user's phone verification status
     const updatedUser = await UserModel.findByIdAndUpdate(
-      req.userId,
+      user._id,
       { isPhoneVerified: true },
       { new: true }
     );
@@ -475,7 +489,8 @@ const AuthController = {
   login,
   logout,
   resetPassword,
-  sendOTPToUser,
+  sendEmailOTP,
+  sendPhoneOTP,
   refreshToken,
   register,
   resendOTP,

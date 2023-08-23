@@ -19,11 +19,12 @@ AuthRouter.post("/logout", AuthController.logout);
 AuthRouter.get("/refresh-token", AuthController.refreshToken);
 
 // OTP
-AuthRouter.post("/otp", AuthController.sendOTPToUser);
+AuthRouter.post("/otp/email", AuthController.sendEmailOTP);
+AuthRouter.post("/otp/phone", AuthController.sendPhoneOTP);
 AuthRouter.post("/otp/resend", AuthController.resendOTP);
 // @ts-ignore
-AuthRouter.post("/otp/verify/email", AuthController.verifyEmailOTP);
+AuthRouter.post("/otp/email/verify", AuthController.verifyEmailOTP);
 // @ts-ignore
-AuthRouter.post("/otp/verify/phone", AuthController.verifyPhoneOTP);
+AuthRouter.post("/otp/phone/verify", AuthController.verifyPhoneOTP);
 
 export default AuthRouter;
