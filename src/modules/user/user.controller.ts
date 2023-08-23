@@ -1,6 +1,8 @@
 import User from "./user.model";
 import { Request, Response } from "express";
 import path from "path";
+import { sendResponse } from "../../utils/sendResponse";
+import { StatusCodes } from "http-status-codes";
 
 const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -11,10 +13,10 @@ const getAllUsers = async (req: Request, res: Response) => {
   }
 };
 
-const updateUser = async (req, res) => {
+const updateUser = async (req: Request, res: Response) => {
   const { email, phone } = req.body;
 
-  const profileImg: string | undefined = req.file?.path;
+  const profileImg: string = req.file?.path ?? "";
 
   /* Normalize the image path using path module. Without this, Windows will make use of
   backward slashes which is not readable by web systems and other OSs */
@@ -23,7 +25,14 @@ const updateUser = async (req, res) => {
   try {
     const userId = req.userId;
     const user = await User.findById(userId);
-
+    if (!user) {
+      return sendResponse({
+        res,
+        status: StatusCodes.NOT_FOUND,
+        success: false,
+        message: "User not found",
+      });
+    }
     user.email = email;
     user.phone = phone;
     user.photo = normalizedProfileImagePath;
@@ -33,7 +42,7 @@ const updateUser = async (req, res) => {
   }
 };
 
-const getUser = async (req, res) => {
+const getUser = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   if (id) {

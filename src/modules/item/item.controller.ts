@@ -1,4 +1,5 @@
 import ItemModel from "./item.model";
+import { Request, Response } from "express";
 
 // Externals
 import { UserModel } from "../user";
@@ -7,7 +8,7 @@ import { CategoryModel } from "../category";
 import { uploadImageToCloudinary } from "../../utils/cloudinary";
 import { sendResponse } from "../../utils/sendResponse";
 
-const handleAllItems = async (req, res) => {
+const handleAllItems = async (req: Request, res: Response) => {
   const allItems = await ItemModel.find();
   return sendResponse({
     res,
@@ -17,7 +18,7 @@ const handleAllItems = async (req, res) => {
   });
 };
 
-const handleAllMissingItems = async (req, res) => {
+const handleAllMissingItems = async (req: Request, res: Response) => {
   try {
     const missingItems = await ItemModel.find({ missing: true });
     res.json(missingItems);
@@ -27,7 +28,7 @@ const handleAllMissingItems = async (req, res) => {
   }
 };
 
-const handleAllFoundItems = async (req, res) => {
+const handleAllFoundItems = async (req: Request, res: Response) => {
   try {
     const foundItems = await ItemModel.find({ missing: false });
     res.status(200).json(foundItems);
@@ -37,14 +38,18 @@ const handleAllFoundItems = async (req, res) => {
   }
 };
 
-const addItem = async (req, res) => {
+const addItem = async (req: Request, res: Response) => {
   const { title, desc, missing, category, location, extraInfo, date, time } =
     req.body;
   const userId = req.userId;
 
-  // const itemImgs: string[] = req.files?.map((file) => file.path);
+  let itemImgs: Buffer[] = [];
 
-  const itemImgs = req.files?.map((file) => file.buffer) || [];
+  if (req.files) {
+    itemImgs = (req.files as Express.Multer.File[]).map(
+      (file: Express.Multer.File) => file.buffer
+    );
+  }
 
   // console.log(itemImgs);
 
@@ -94,7 +99,7 @@ const addItem = async (req, res) => {
   }
 };
 
-const getItem = async (req, res) => {
+const getItem = async (req: Request, res: Response) => {
   const itemId = req.params.id;
   const item = await ItemModel.findById(itemId);
 
@@ -103,13 +108,28 @@ const getItem = async (req, res) => {
   }
 };
 
-const bookmarkItem = async (req, res) => {
+const bookmarkItem = async (req: Request, res: Response) => {
   const itemId = req.params.id;
   const userId = req.userId;
 
   const user = await UserModel.findById(userId);
+  if (!user) {
+    return sendResponse({
+      res,
+      status: 404,
+      success: false,
+      message: "User not found",
+    });
+  }
   const item = await ItemModel.findById(itemId);
-
+  if (!item) {
+    return sendResponse({
+      res,
+      status: 404,
+      success: false,
+      message: "Item not found",
+    });
+  }
   if (item) {
     user.bookmarked.push(itemId);
     await user.save();
@@ -119,9 +139,9 @@ const bookmarkItem = async (req, res) => {
   } else res.status(404).send({ error: "Item not found" });
 };
 
-const updateItem = async (req, res) => {};
+const updateItem = async (req: Request, res: Response) => {};
 
-const getItemsByUser = async (req, res) => {
+const getItemsByUser = async (req: Request, res: Response) => {
   const { username } = req.params;
 
   try {

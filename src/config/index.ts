@@ -29,5 +29,6 @@ export const env = {
 export const PORT = getEnv("PORT")!;
 export const DATABASE_URL = getEnv("DATABASE_URL")!;
 export const JWT_SECRET_KEY = getEnv("JWT_SECRET_KEY")!;
+export const SENDGRID_API_KEY = getEnv("SENDGRID_API_KEY")!;
 // export const STORAGE_URL = getEnv("STORAGE_URL")!;
 // export const STORAGE_KEY = getEnv("STORAGE_KEY")!;

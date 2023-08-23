@@ -7,7 +7,7 @@ cloudinary.config({
 });
 
 // Helper function to upload image to Cloudinary
-const uploadImageToCloudinary = async (file) => {
+const uploadImageToCloudinary = async (file: Buffer) => {
   const base64Image = file.toString("base64"); // Convert the buffer to a Base64 string
   try {
     const result = await cloudinary.uploader.upload(

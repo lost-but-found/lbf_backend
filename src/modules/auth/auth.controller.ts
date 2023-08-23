@@ -12,7 +12,7 @@ const bcrypt = require("bcrypt");
 
 const jwt = require("jsonwebtoken");
 
-export const resetPassword = async (req, res) => {
+export const resetPassword = async (req: Request, res: Response) => {
   const { email, phone } = req.body;
 
   let user;
@@ -25,14 +25,14 @@ export const resetPassword = async (req, res) => {
   }
 
   if (!user) {
-    res
+    return res
       .status(404)
       .send({ error: "No user registered with that email or phone number" });
   }
 
   const token = AuthService.generateOTPService();
 
-  const sendToken = async (email, token) => {
+  const sendToken = async (email: string, token: string) => {
     const msg = {
       to: email,
       from: "lostbutfounditemsapp@gmail.com",
@@ -52,8 +52,8 @@ export const resetPassword = async (req, res) => {
   try {
     await sendToken(user.email, token);
     // Store the generated token in the user model
-    user.resetToken = token;
-    await user.save();
+    // user.resetToken = token;
+    // await user.save();
     res.status(200).send({ message: "Password reset code sent successfully" });
   } catch (error) {
     console.error(error);
@@ -61,7 +61,7 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-const sendOTPToUser = async (req, res) => {
+const sendOTPToUser = async (req: Request, res: Response) => {
   const { email } = req.body;
 
   try {
@@ -75,7 +75,7 @@ const sendOTPToUser = async (req, res) => {
       });
     }
 
-    let OTP = OTPTokenService.generateOTP(user._id, "emailVerification");
+    let OTP = await OTPTokenService.generateOTP(user._id, "emailVerification");
     console.log({ OTP });
 
     //Update OTP of user
@@ -110,7 +110,7 @@ const sendOTPToUser = async (req, res) => {
   }
 };
 
-const login = async (req, res) => {
+const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password)
     return res
@@ -153,7 +153,7 @@ const login = async (req, res) => {
 
     res.cookie("jwt", refreshToken, {
       httpOnly: true,
-      sameSite: "None",
+      sameSite: "none",
       //   secure: true,
       maxAge: 24 * 60 * 60 * 1000,
     });
@@ -163,7 +163,7 @@ const login = async (req, res) => {
   }
 };
 
-const logout = async (req, res) => {
+const logout = async (req: Request, res: Response) => {
   // On client, also delete the accessToken
   const cookies = req.cookies;
   if (!cookies?.jwt) return res.sendStatus(204); //No content
@@ -172,7 +172,7 @@ const logout = async (req, res) => {
   // Is refreshToken in db?
   const foundUser = await UserModel.findOne({ refreshToken }).exec();
   if (!foundUser) {
-    res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
+    res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true });
     return res.sendStatus(204);
   }
 
@@ -181,11 +181,11 @@ const logout = async (req, res) => {
   const result = await foundUser.save();
   console.log(result);
 
-  res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
+  res.clearCookie("jwt", { httpOnly: true, sameSite: "none", secure: true });
   res.sendStatus(204);
 };
 
-const refreshToken = async (req, res) => {
+const refreshToken = async (req: Request, res: Response) => {
   const cookies = req.cookies;
   console.log(cookies);
   if (!cookies?.jwt) return res.sendStatus(401);
@@ -198,22 +198,31 @@ const refreshToken = async (req, res) => {
   if (!foundUser) return res.sendStatus(403); //Forbidden
 
   // evaluate jwt
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
-    if (err || foundUser.email !== decoded.email)
-      return res.json({ message: "No match!" }); // res.sendStatus(403);
+  jwt.verify(
+    refreshToken,
+    process.env.REFRESH_TOKEN_SECRET,
+    (
+      err: Error,
+      decoded: {
+        email: string;
+      }
+    ) => {
+      if (err || foundUser.email !== decoded.email)
+        return res.json({ message: "No match!" }); // res.sendStatus(403);
 
-    const accessToken = jwt.sign(
-      {
-        email: decoded.email,
-      },
-      JWT_SECRET_KEY,
-      { expiresIn: "300s" }
-    );
-    res.json({ accessToken });
-  });
+      const accessToken = jwt.sign(
+        {
+          email: decoded.email,
+        },
+        JWT_SECRET_KEY,
+        { expiresIn: "300s" }
+      );
+      res.json({ accessToken });
+    }
+  );
 };
 
-const handleNewUser = async (req, res) => {
+const handleNewUser = async (req: Request, res: Response) => {
   const { name, email, password, phone } = req.body;
   if (!email || !password || !name || !phone)
     return res.status(400).json({ message: "Please fill in all details" });
@@ -266,7 +275,7 @@ const handleNewUser = async (req, res) => {
     await sgMail.send(msg);
     console.log(`OTP sent to ${email}`);
     res.status(201).json({ success: `New user created!`, userId: result._id });
-  } catch (err) {
+  } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
 };
@@ -328,12 +337,12 @@ const register = async (req: Request, res: Response) => {
     await sgMail.send(msg);
     console.log(`OTP sent to ${email}`);
     res.status(201).json({ success: `New user created!`, userId: result._id });
-  } catch (err) {
+  } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
 };
 
-const resendOTP = async (req, res) => {
+const resendOTP = async (req: Request, res: Response) => {
   const { email } = req.body;
 
   let OTP = AuthService.generateOTPService();
@@ -433,7 +442,7 @@ const verifyPhoneOTP = async (
   }
 };
 
-const checkIfEmailOrPhoneExists = async (req, res) => {
+const checkIfEmailOrPhoneExists = async (req: Request, res: Response) => {
   const { email, phone } = req.params;
 
   try {

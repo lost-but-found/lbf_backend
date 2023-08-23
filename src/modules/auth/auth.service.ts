@@ -9,7 +9,7 @@ const generateOTPService = () => {
   return code;
 };
 
-const sendOTPService = async (email, OTP) => {
+const sendOTPService = async (email: string, OTP: string) => {
   const msg = {
     to: email,
     from: "lostbutfounditemsapp@gmail.com",

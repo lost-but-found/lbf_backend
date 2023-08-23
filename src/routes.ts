@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import path from "path";
 import { Application, Router } from "express";
 import { AuthRouter } from "./modules/auth";
@@ -29,7 +29,7 @@ const routes = (app: Application) => {
     res.status(404).json({ message: "Sorry, page not found!" });
   });
 
-  app.use((err, req, res, next) => {
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     if (err) {
       res.status(500).json({
         message: err.message,

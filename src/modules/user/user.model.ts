@@ -10,7 +10,7 @@ interface IUser extends Document {
   verified: boolean;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
-  bookmarked?: string[];
+  bookmarked: string[];
   tempOTP: {
     timeStamp: number;
     OTP: string;
@@ -43,11 +43,11 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
-  bookmarked: [
-    {
-      type: Schema.Types.ObjectId,
-    },
-  ],
+  bookmarked: {
+    type: [Schema.Types.ObjectId],
+    ref: "Item",
+    default: [],
+  },
   verified: Boolean,
   tempOTP: {
     timeStamp: Number,

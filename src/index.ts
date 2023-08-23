@@ -11,10 +11,10 @@ import cookieParser from "cookie-parser";
 import connectToDatabase from "./utils/connectToDatabase";
 import routes from "./routes";
 import { isWhitelisted } from "./modules/auth/auth.middleware";
-import { PORT } from "./config";
+import { PORT, SENDGRID_API_KEY } from "./config";
 
 /* Sendgrid implementation */
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+sgMail.setApiKey(SENDGRID_API_KEY);
 
 // Handle options credentials check - before CORS!
 // and fetch cookies credentials requirement

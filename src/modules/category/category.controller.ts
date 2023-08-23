@@ -1,12 +1,13 @@
+import { Request, Response } from "express";
 import Category from "./category.model";
 
-const getAllCategories = async (req, res) => {
+const getAllCategories = async (req: Request, res: Response) => {
   const allCategories = await Category.find({});
-  res.status(200).send.json(allCategories);
+  res.status(200).json(allCategories);
 };
 
 // Route for adding a category
-const addCategory = async (req, res) => {
+const addCategory = async (req: Request, res: Response) => {
   try {
     // Extract the required fields from the request body
     const { name, description } = req.body;
