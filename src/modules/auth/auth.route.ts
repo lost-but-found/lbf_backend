@@ -1,11 +1,18 @@
 import express, { Router } from "express";
 import AuthController from "./auth.controller";
 import upload from "../../middleware/upload";
+import validateRequest from "../../middleware/validateRequest";
+import { registerUserSchema } from "./auth.schema";
 
 const AuthRouter: Router = express.Router();
 
 AuthRouter.get("/check", AuthController.checkIfEmailOrPhoneExists);
-AuthRouter.post("/register", upload.single("photo"), AuthController.register);
+AuthRouter.post(
+  "/register",
+  upload.single("photo"),
+  validateRequest(registerUserSchema),
+  AuthController.register
+);
 
 AuthRouter.post("/login", AuthController.login);
 AuthRouter.post("/logout", AuthController.logout);
