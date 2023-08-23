@@ -5,6 +5,8 @@ import { AuthRouter } from "./modules/auth";
 import { CategoryRouter } from "./modules/category";
 import { ItemRouter } from "./modules/item";
 import { UserRouter } from "./modules/user";
+import { sendResponse } from "./utils/sendResponse";
+import { StatusCodes } from "http-status-codes";
 
 const router: Router = Router();
 
@@ -26,13 +28,22 @@ const routes = (app: Application) => {
   // Error handler for 404 - Page Not Found
   app.use((req: Request, res: Response, next) => {
     console.log("---- 404 error handler", req.originalUrl);
-    res.status(404).json({ message: "Sorry, page not found!" });
+    sendResponse({
+      res,
+      status: StatusCodes.NOT_FOUND,
+      message: "Sorry, page not found!",
+      success: false,
+    });
   });
 
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     if (err) {
-      res.status(500).json({
+      sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
         message: err.message,
+        success: false,
+        // error: err,
       });
       next();
     }
