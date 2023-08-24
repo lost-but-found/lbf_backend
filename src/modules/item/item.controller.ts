@@ -9,102 +9,180 @@ import { uploadImageToCloudinary } from "../../utils/cloudinary";
 import { sendResponse } from "../../utils/sendResponse";
 
 const handleAllItems = async (req: Request, res: Response) => {
-  const allItems = await ItemModel.find();
-  return sendResponse({
-    res,
-    message: "All items retrieved!",
-    data: allItems,
-    success: true,
-  });
-};
-
-const handleAllMissingItems = async (req: Request, res: Response) => {
   try {
-    const missingItems = await ItemModel.find({ missing: true });
-    res.json(missingItems);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
+    // Check for any query parameters (category, location, date_from, date_to, type, page, limit)
+    const { category, location, date_from, date_to, type } = req.query;
+    let { page, limit } = req.query;
 
-const handleAllFoundItems = async (req: Request, res: Response) => {
-  try {
-    const foundItems = await ItemModel.find({ missing: false });
-    res.status(200).json(foundItems);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    // Create a query object
+    const query: any = {};
+
+    // Add the query parameters to the query object
+    if (category) query.category = category;
+    if (location) query.location = location;
+    if (type) query.type = type;
+
+    if (date_from && date_to) {
+      query.createdAt = {
+        $gte: new Date(date_from as string),
+        $lte: new Date(date_to as string),
+      };
+    } else if (date_from) {
+      query.createdAt = {
+        $gte: new Date(date_from as string),
+      };
+    } else if (date_to) {
+      query.createdAt = {
+        $lte: new Date(date_to as string),
+      };
+    }
+
+    const pageAsNumber = parseInt((page ?? "0") as string);
+    const limitAsNumber = parseInt((limit ?? "10") as string);
+
+    const skipCount = pageAsNumber * limitAsNumber;
+
+    const [items, totalItemsCount] = await Promise.all([
+      ItemModel.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skipCount)
+        .limit(limitAsNumber),
+      ItemModel.countDocuments(query),
+    ]);
+
+    return sendResponse({
+      res,
+      message: "All items retrieved!",
+      data: {
+        items,
+        page: pageAsNumber,
+        limit: limitAsNumber,
+        total: totalItemsCount,
+        hasMore: items.length < totalItemsCount,
+      },
+      success: true,
+    });
+  } catch (error: any) {
+    return sendResponse({
+      res,
+      message: "Failed to retrieve items!",
+      error: error,
+      success: false,
+    });
   }
 };
 
 const addItem = async (req: Request, res: Response) => {
-  const { title, desc, missing, category, location, extraInfo, date, time } =
-    req.body;
-  const userId = req.userId;
-
-  let itemImgs: Buffer[] = [];
-
-  if (req.files) {
-    itemImgs = (req.files as Express.Multer.File[]).map(
-      (file: Express.Multer.File) => file.buffer
-    );
-  }
-
-  // console.log(itemImgs);
-
   try {
-    const itemImg = itemImgs[0]; // Extract the first image for itemImg
-    if (!itemImg) return console.log("No item image fam");
-
-    const otherImgs = itemImgs; //rest of thte image urls
-
-    // Upload the main itemImg to Cloudinary
-    const itemImgUrl = await uploadImageToCloudinary(itemImg);
-
-    // Upload otherImgs to Cloudinary
-    const otherImgUrls = await Promise.all(
-      otherImgs.map(uploadImageToCloudinary)
-    );
-
-    // const otherImgUrls = await Promise.all(
-    //   itemImgs.map(uploadImageToCloudinary)
-    // );
-
-    const result = await ItemModel.create({
-      title,
-      description: desc,
-      missing,
-      dateRegistered: date,
-      timeFound: time,
+    const {
+      name,
+      description,
+      type,
       category,
       location,
-      itemImg: itemImgUrl,
-      otherImgs: otherImgUrls,
       extraInfo,
-      userId,
-    });
-    const duplicateCategory = await CategoryModel.findOne({ name: category });
+      date,
+      time,
+    } = req.body;
+    const poster = req.userId;
 
-    if (!duplicateCategory) {
-      await CategoryModel.create({
-        name: category,
-      });
+    let itemImgs: Buffer[] = [];
+
+    if (req.files) {
+      itemImgs = (req.files as Express.Multer.File[]).map(
+        (file: Express.Multer.File) => file.buffer
+      );
     }
-    res.status(201).send({ message: "Item added!", userId });
-    console.log(result);
-  } catch (error) {
-    res.status(500).send({ error: error });
+
+    // console.log(itemImgs);
+
+    try {
+      const itemImg = itemImgs[0]; // Extract the first image for itemImg
+      if (!itemImg) return console.log("No item image fam");
+
+      const otherImgs = itemImgs; //rest of thte image urls
+
+      // Upload the main itemImg to Cloudinary
+      const itemImgUrl = await uploadImageToCloudinary(itemImg);
+
+      // Upload otherImgs to Cloudinary
+      const otherImgUrls = await Promise.all(
+        otherImgs.map(uploadImageToCloudinary)
+      );
+
+      // const otherImgUrls = await Promise.all(
+      //   itemImgs.map(uploadImageToCloudinary)
+      // );
+
+      const result = await ItemModel.create({
+        name,
+        description,
+        type,
+        date,
+        time,
+        category,
+        location,
+        itemImg: itemImgUrl,
+        otherImgs: otherImgUrls,
+        extraInfo,
+        poster,
+      });
+      const duplicateCategory = await CategoryModel.findOne({ name: category });
+
+      if (!duplicateCategory) {
+        await CategoryModel.create({
+          name: category,
+        });
+      }
+      sendResponse({
+        res,
+        message: "Item added!",
+        data: result,
+        success: true,
+      });
+      console.log(result);
+    } catch (error: any) {
+      // res.status(500).send({ error: error });
+      sendResponse({
+        res,
+        message: "Item not added!",
+        error: error,
+        success: false,
+      });
+      console.log(error);
+    }
+  } catch (error: any) {
+    sendResponse({
+      res,
+      message: "Item not added!",
+      error: error,
+      success: false,
+    });
     console.log(error);
   }
 };
 
 const getItem = async (req: Request, res: Response) => {
-  const itemId = req.params.id;
-  const item = await ItemModel.findById(itemId);
+  try {
+    const itemId = req.params.id;
+    const item = await ItemModel.findById(itemId);
 
-  if (item) {
-    res.status(200).json(item);
+    if (item) {
+      sendResponse({
+        res,
+        message: "Item retrieved!",
+        data: item,
+        success: true,
+      });
+    }
+  } catch (error: any) {
+    sendResponse({
+      res,
+      message: "Item not retrieved!",
+      error: error,
+      success: false,
+    });
+    console.log(error);
   }
 };
 
@@ -159,20 +237,10 @@ const getItemsByUser = async (req: Request, res: Response) => {
 const ItemController = {
   handleAllItems,
   getItem,
-  handleAllFoundItems,
-  handleAllMissingItems,
+
   bookmarkItem,
   addItem,
   getItemsByUser,
 };
 
-export {
-  handleAllItems,
-  getItem,
-  handleAllFoundItems,
-  handleAllMissingItems,
-  bookmarkItem,
-  addItem,
-  getItemsByUser,
-};
 export default ItemController;

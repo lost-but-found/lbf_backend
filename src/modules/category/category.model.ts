@@ -3,7 +3,7 @@ import { Schema, Document, model, Types } from "mongoose";
 interface ICategory extends Document {
   name: string;
   description?: string;
-  categoryImg?: string;
+  image?: string;
 }
 
 const categorySchema = new Schema<ICategory>({
@@ -14,7 +14,7 @@ const categorySchema = new Schema<ICategory>({
   description: {
     type: String,
   },
-  categoryImg: {
+  image: {
     type: String,
   },
 });

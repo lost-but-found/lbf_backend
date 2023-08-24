@@ -5,7 +5,7 @@ import { StatusCodes } from "http-status-codes";
 
 const getAllCategories = async (req: Request, res: Response) => {
   try {
-    const allCategories = await Category.find({});
+    const allCategories = await Category.find();
 
     return sendResponse({
       res,
@@ -41,12 +41,6 @@ const addCategory = async (req: Request, res: Response) => {
       });
     }
 
-    // Create a new Category instance
-    const newCategory = new Category({ name, description });
-
-    // Save the category to the database
-    await newCategory.save();
-
     // Check if the category name already exists
     const existingCategory = await Category.findOne({ name });
     if (existingCategory) {
@@ -57,6 +51,12 @@ const addCategory = async (req: Request, res: Response) => {
         success: false,
       });
     }
+
+    // Create a new Category instance
+    const newCategory = new Category({ name, description });
+
+    // Save the category to the database
+    await newCategory.save();
 
     // Return a success response
     return sendResponse({
@@ -82,5 +82,4 @@ const CategoryController = {
   addCategory,
 };
 
-export { getAllCategories, addCategory };
 export default CategoryController;

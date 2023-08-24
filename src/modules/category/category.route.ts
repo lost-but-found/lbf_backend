@@ -1,8 +1,15 @@
 import express, { Router } from "express";
-import { getAllCategories, addCategory } from "./category.controller";
+import CategoryController from "./category.controller";
+import validateRequest from "../../middleware/validateRequest";
+import { createCategorySchema } from "./schemas/create-category.schema";
 
 const CategoryRouter: Router = express.Router();
 
-CategoryRouter.route("/").get(getAllCategories).post(addCategory);
+CategoryRouter.post(
+  "/",
+  validateRequest(createCategorySchema),
+  CategoryController.addCategory
+);
+CategoryRouter.get("/", CategoryController.getAllCategories);
 
 export default CategoryRouter;
