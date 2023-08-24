@@ -7,7 +7,7 @@ async function generateOTP(
   userId: string,
   type: OTPToken["type"]
 ): Promise<string> {
-  const token = crypto.randomBytes(6).toString("hex");
+  const token = crypto.randomInt(100000, 999999).toString();
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60000); // Convert minutes to milliseconds
 
   const otpToken = new OTPTokenModel({
