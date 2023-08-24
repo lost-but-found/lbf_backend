@@ -14,7 +14,7 @@ const AuthRouter: Router = express.Router();
 AuthRouter.get("/check", AuthController.checkIfEmailOrPhoneExists);
 AuthRouter.post(
   "/register",
-  upload.single("photo"),
+  // upload.single("photo"),
   validateRequest(registerUserSchema),
   AuthController.register
 );
