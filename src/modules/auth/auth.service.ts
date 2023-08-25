@@ -30,6 +30,7 @@ async function verifyUserEmail(
   userId: string,
   token: string
 ): Promise<boolean> {
+  console.log("verifyUserEmail", userId, token);
   return OTPTokenService.verifyOTP({
     token,
     type: "emailVerification",
