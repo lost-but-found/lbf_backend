@@ -8,34 +8,46 @@ import { CategoryModel } from "../category";
 import { uploadImageToCloudinary } from "../../utils/cloudinary";
 import { sendResponse } from "../../utils/sendResponse";
 
-const handleAllItems = async (req: Request, res: Response) => {
+const buildQuery = (query: any) => {
+  const queryObj: any = {};
+  // const excludedFields = ["page", "sort", "limit", "fields"];
+  // excludedFields.forEach((el) => delete query[el]);
+
+  if (query.date_from && query.date_to) {
+    queryObj.createdAt = {
+      $gte: new Date(query.date_from as string),
+      $lte: new Date(query.date_to as string),
+    };
+  } else if (query.date_from) {
+    queryObj.createdAt = {
+      $gte: new Date(query.date_from as string),
+    };
+  } else if (query.date_to) {
+    queryObj.createdAt = {
+      $lte: new Date(query.date_to as string),
+    };
+  }
+
+  return queryObj;
+};
+
+const getItems = async (req: Request, res: Response) => {
   try {
     // Check for any query parameters (category, location, date_from, date_to, type, page, limit)
-    const { category, location, date_from, date_to, type } = req.query;
-    let { page, limit } = req.query;
+    const { category, location, date_from, date_to, type, poster } = req.query;
+    const { page, limit } = req.query;
 
     // Create a query object
-    const query: any = {};
+    let query: any = {};
 
     // Add the query parameters to the query object
     if (category) query.category = category;
     if (location) query.location = location;
     if (type) query.type = type;
+    if (poster) query.poster = poster;
 
-    if (date_from && date_to) {
-      query.createdAt = {
-        $gte: new Date(date_from as string),
-        $lte: new Date(date_to as string),
-      };
-    } else if (date_from) {
-      query.createdAt = {
-        $gte: new Date(date_from as string),
-      };
-    } else if (date_to) {
-      query.createdAt = {
-        $lte: new Date(date_to as string),
-      };
-    }
+    // Add the date query parameters to the query object
+    query = { ...query, ...buildQuery(req.query) };
 
     const pageAsNumber = parseInt((page ?? "0") as string);
     const limitAsNumber = parseInt((limit ?? "10") as string);
@@ -219,28 +231,12 @@ const bookmarkItem = async (req: Request, res: Response) => {
 
 const updateItem = async (req: Request, res: Response) => {};
 
-const getItemsByUser = async (req: Request, res: Response) => {
-  const { username } = req.params;
-
-  try {
-    const user = await UserModel.findOne({ username });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    const items = await ItemModel.find({ user: user._id });
-    res.json(items);
-  } catch (error) {
-    res.status(500).json({ error: "An error occurred" });
-  }
-};
-
 const ItemController = {
-  handleAllItems,
+  getItems,
   getItem,
-
   bookmarkItem,
   addItem,
-  getItemsByUser,
+  // getItemsByUser,
 };
 
 export default ItemController;
