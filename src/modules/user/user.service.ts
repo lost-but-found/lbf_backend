@@ -47,7 +47,7 @@ class UserService {
 
   async getBookmarkedItems(userId: string, type?: string) {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).populate("bookmarked");
 
       if (!user) {
         throw new Error("User not found.");
@@ -61,11 +61,20 @@ class UserService {
         query.type = type;
       }
 
-      const bookmarkedItems = await ItemModel.find(query);
+      const bookmarkedItems = user.bookmarked;
 
       return bookmarkedItems;
     } catch (error) {
       throw new Error("Failed to retrieve bookmarked items.");
+    }
+  }
+
+  async getUser(userId: string) {
+    try {
+      const user = await User.findById(userId);
+      return user;
+    } catch (error) {
+      throw new Error("Failed to retrieve user.");
     }
   }
 }

@@ -60,6 +60,27 @@ class UserController {
     }
   };
 
+  async getProfile(req: Request, res: Response) {
+    try {
+      const userId = req.userId;
+      const user = await UserService.getUser(userId);
+
+      return sendResponse({
+        res,
+        message: "User profile retrieved successfully.",
+        data: user,
+        success: true,
+      });
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "Failed to retrieve user profile.",
+        error: error.message,
+        success: false,
+      });
+    }
+  }
   async bookmarkItem(req: Request, res: Response) {
     try {
       const itemId = req.params.id;
