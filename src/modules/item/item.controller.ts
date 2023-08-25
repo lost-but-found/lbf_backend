@@ -1,242 +1,250 @@
-import ItemModel from "./item.model";
 import { Request, Response } from "express";
-
-// Externals
-import { UserModel } from "../user";
-import { CategoryModel } from "../category";
-
-import { uploadImageToCloudinary } from "../../utils/cloudinary";
 import { sendResponse } from "../../utils/sendResponse";
+import { StatusCodes } from "http-status-codes";
+import ItemService from "./item.service";
 
-const buildQuery = (query: any) => {
-  const queryObj: any = {};
-  // const excludedFields = ["page", "sort", "limit", "fields"];
-  // excludedFields.forEach((el) => delete query[el]);
-
-  if (query.date_from && query.date_to) {
-    queryObj.createdAt = {
-      $gte: new Date(query.date_from as string),
-      $lte: new Date(query.date_to as string),
-    };
-  } else if (query.date_from) {
-    queryObj.createdAt = {
-      $gte: new Date(query.date_from as string),
-    };
-  } else if (query.date_to) {
-    queryObj.createdAt = {
-      $lte: new Date(query.date_to as string),
-    };
-  }
-
-  return queryObj;
-};
-
-const getItems = async (req: Request, res: Response) => {
-  try {
-    // Check for any query parameters (category, location, date_from, date_to, type, page, limit)
-    const { category, location, date_from, date_to, type, poster } = req.query;
-    const { page, limit } = req.query;
-
-    // Create a query object
-    let query: any = {};
-
-    // Add the query parameters to the query object
-    if (category) query.category = category;
-    if (location) query.location = location;
-    if (type) query.type = type;
-    if (poster) query.poster = poster;
-
-    // Add the date query parameters to the query object
-    query = { ...query, ...buildQuery(req.query) };
-
-    const pageAsNumber = parseInt((page ?? "0") as string);
-    const limitAsNumber = parseInt((limit ?? "10") as string);
-
-    const skipCount = pageAsNumber * limitAsNumber;
-
-    const [items, totalItemsCount] = await Promise.all([
-      ItemModel.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skipCount)
-        .limit(limitAsNumber),
-      ItemModel.countDocuments(query),
-    ]);
-
-    return sendResponse({
-      res,
-      message: "All items retrieved!",
-      data: {
-        items,
-        page: pageAsNumber,
-        limit: limitAsNumber,
-        total: totalItemsCount,
-        hasMore: items.length < totalItemsCount,
-      },
-      success: true,
-    });
-  } catch (error: any) {
-    return sendResponse({
-      res,
-      message: "Failed to retrieve items!",
-      error: error,
-      success: false,
-    });
-  }
-};
-
-const addItem = async (req: Request, res: Response) => {
-  try {
-    const {
-      name,
-      description,
-      type,
-      category,
-      location,
-      extraInfo,
-      date,
-      time,
-    } = req.body;
-    const poster = req.userId;
-
-    let itemImgs: Buffer[] = [];
-
-    if (req.files) {
-      itemImgs = (req.files as Express.Multer.File[]).map(
-        (file: Express.Multer.File) => file.buffer
-      );
-    }
-
-    // console.log(itemImgs);
-
+class ItemController {
+  async getItems(req: Request, res: Response) {
     try {
-      const itemImg = itemImgs[0]; // Extract the first image for itemImg
-      if (!itemImg) return console.log("No item image fam");
+      const { category, location, date_from, date_to, type, poster } =
+        req.query;
+      const { page, limit } = req.query;
 
-      const otherImgs = itemImgs; //rest of thte image urls
+      let query: any = {};
 
-      // Upload the main itemImg to Cloudinary
-      const itemImgUrl = await uploadImageToCloudinary(itemImg);
+      if (category) query.category = category;
+      if (location) query.location = location;
+      if (type) query.type = type;
+      if (poster) query.poster = poster;
+      query = { ...query, ...this.buildQuery(req.query) };
 
-      // Upload otherImgs to Cloudinary
-      const otherImgUrls = await Promise.all(
-        otherImgs.map(uploadImageToCloudinary)
+      const pageAsNumber = parseInt((page ?? "0") as string);
+      const limitAsNumber = parseInt((limit ?? "10") as string);
+
+      const result = await ItemService.getItems(
+        query,
+        pageAsNumber,
+        limitAsNumber
       );
 
-      // const otherImgUrls = await Promise.all(
-      //   itemImgs.map(uploadImageToCloudinary)
-      // );
-
-      const result = await ItemModel.create({
-        name,
-        description,
-        type,
-        date,
-        time,
-        category,
-        location,
-        itemImg: itemImgUrl,
-        otherImgs: otherImgUrls,
-        extraInfo,
-        poster,
-      });
-      const duplicateCategory = await CategoryModel.findOne({ name: category });
-
-      if (!duplicateCategory) {
-        await CategoryModel.create({
-          name: category,
-        });
-      }
-      sendResponse({
+      return sendResponse({
         res,
-        message: "Item added!",
-        data: result,
+        message: "All items retrieved!",
+        data: {
+          items: result.items,
+          page: pageAsNumber,
+          limit: limitAsNumber,
+          total: result.totalItemsCount,
+          hasMore: result.items.length < result.totalItemsCount,
+        },
         success: true,
       });
-      console.log(result);
     } catch (error: any) {
-      // res.status(500).send({ error: error });
-      sendResponse({
+      return sendResponse({
         res,
-        message: "Item not added!",
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "Failed to retrieve items!",
         error: error,
         success: false,
       });
-      console.log(error);
     }
-  } catch (error: any) {
-    sendResponse({
-      res,
-      message: "Item not added!",
-      error: error,
-      success: false,
-    });
-    console.log(error);
   }
-};
 
-const getItem = async (req: Request, res: Response) => {
-  try {
-    const itemId = req.params.id;
-    const item = await ItemModel.findById(itemId);
+  async addItem(req: Request, res: Response) {
+    try {
+      const {
+        name,
+        description,
+        type,
+        category,
+        location,
+        extraInfo,
+        date,
+        time,
+      } = req.body;
+      const poster = req.userId;
 
-    if (item) {
-      sendResponse({
+      let itemImgs: Buffer[] = [];
+
+      if (req.files) {
+        itemImgs = (req.files as Express.Multer.File[]).map(
+          (file: Express.Multer.File) => file.buffer
+        );
+      }
+
+      const data = {
+        name,
+        description,
+        type,
+        category,
+        location,
+        extraInfo,
+        date,
+        time,
+        itemImgs,
+      };
+
+      const result = await ItemService.addItem(data, poster);
+
+      return sendResponse({
         res,
-        message: "Item retrieved!",
-        data: item,
+        status: StatusCodes.CREATED,
+        message: "Item created successfully.",
+        data: result,
         success: true,
       });
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "Failed to create item.",
+        error: error,
+        success: false,
+      });
     }
-  } catch (error: any) {
-    sendResponse({
-      res,
-      message: "Item not retrieved!",
-      error: error,
-      success: false,
-    });
-    console.log(error);
   }
-};
 
-const bookmarkItem = async (req: Request, res: Response) => {
-  const itemId = req.params.id;
-  const userId = req.userId;
+  async getItem(req: Request, res: Response) {
+    try {
+      const itemId = req.params.id;
+      const item = await ItemService.getItem(itemId);
 
-  const user = await UserModel.findById(userId);
-  if (!user) {
-    return sendResponse({
-      res,
-      status: 404,
-      success: false,
-      message: "User not found",
-    });
+      if (item) {
+        return sendResponse({
+          res,
+          status: StatusCodes.OK,
+          message: "Item retrieved!",
+          data: item,
+          success: true,
+        });
+      }
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "Item not retrieved!",
+        error: error,
+        success: false,
+      });
+    }
   }
-  const item = await ItemModel.findById(itemId);
-  if (!item) {
-    return sendResponse({
-      res,
-      status: 404,
-      success: false,
-      message: "Item not found",
-    });
+
+  async searchItems(req: Request, res: Response) {
+    try {
+      const { query, page, limit } = req.query;
+
+      if (!query) {
+        return sendResponse({
+          res,
+          status: StatusCodes.BAD_REQUEST,
+          message: "Search query is required.",
+          success: false,
+        });
+      }
+
+      const pageAsNumber = parseInt((page ?? "0") as string);
+      const limitAsNumber = parseInt((limit ?? "10") as string);
+
+      const result = await ItemService.searchItems(
+        query as string,
+        pageAsNumber,
+        limitAsNumber
+      );
+
+      return sendResponse({
+        res,
+        message: "Search results retrieved!",
+        data: {
+          items: result.items,
+          page: pageAsNumber,
+          limit: limitAsNumber,
+          total: result.totalItemsCount,
+          hasMore: result.items.length < result.totalItemsCount,
+        },
+        success: true,
+      });
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        message: "Failed to search items!",
+        error: error,
+        success: false,
+      });
+    }
   }
-  if (item) {
-    user.bookmarked.push(itemId);
-    await user.save();
 
-    console.log(user);
-    res.status(200).send({ message: "Item bookmarked!" });
-  } else res.status(404).send({ error: "Item not found" });
-};
+  async claimItem(req: Request, res: Response) {
+    try {
+      const userId = req.userId;
+      const itemId = req.params.id;
 
-const updateItem = async (req: Request, res: Response) => {};
+      await ItemService.claimItem(userId, itemId);
 
-const ItemController = {
-  getItems,
-  getItem,
-  bookmarkItem,
-  addItem,
-  // getItemsByUser,
-};
+      return sendResponse({
+        res,
+        message: "Item claimed successfully.",
+        success: true,
+      });
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "Failed to claim item.",
+        error: error.message,
+        success: false,
+      });
+    }
+  }
 
-export default ItemController;
+  async getClaimedItems(req: Request, res: Response) {
+    try {
+      const userId = req.userId;
+      const { type } = req.query;
+
+      const claimedItems = await ItemService.getClaimedItems(
+        userId,
+        type as string
+      );
+
+      return sendResponse({
+        res,
+        message: "Claimed items retrieved successfully.",
+        data: claimedItems,
+        success: true,
+      });
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "Failed to retrieve claimed items.",
+        error: error.message,
+        success: false,
+      });
+    }
+  }
+
+  buildQuery = (query: any) => {
+    const queryObj: any = {};
+    // const excludedFields = ["page", "sort", "limit", "fields"];
+    // excludedFields.forEach((el) => delete query[el]);
+
+    if (query.date_from && query.date_to) {
+      queryObj.createdAt = {
+        $gte: new Date(query.date_from as string),
+        $lte: new Date(query.date_to as string),
+      };
+    } else if (query.date_from) {
+      queryObj.createdAt = {
+        $gte: new Date(query.date_from as string),
+      };
+    } else if (query.date_to) {
+      queryObj.createdAt = {
+        $lte: new Date(query.date_to as string),
+      };
+    }
+
+    return queryObj;
+  };
+}
+
+export default new ItemController();

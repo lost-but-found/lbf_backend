@@ -9,8 +9,8 @@ import { StatusCodes } from "http-status-codes";
 declare global {
   namespace Express {
     interface Request {
-      user?: string; // Attach the User type to the user property
-      userId?: string;
+      user: string; // Attach the User type to the user property
+      userId: string;
     }
   }
 }

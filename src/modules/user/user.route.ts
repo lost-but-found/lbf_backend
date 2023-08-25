@@ -1,10 +1,12 @@
 import express, { Router } from "express";
-import { getAllUsers, getUser } from "./user.controller";
+import UserController from "./user.controller";
+import { isAuth } from "../auth/auth.middleware";
 
 const UserRouter: Router = express.Router();
 
-UserRouter.get("/", getAllUsers);
+UserRouter.get("/", isAuth, UserController.getAllUsers);
 
-UserRouter.get("/:id", getUser);
+UserRouter.get("/bookmark/:id", isAuth, UserController.bookmarkItem);
+UserRouter.get("/:id", isAuth, UserController.getUser);
 
 export default UserRouter;

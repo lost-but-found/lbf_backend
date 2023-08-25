@@ -15,6 +15,8 @@ interface IItem extends Document {
   extraInfo?: string;
   createdAt?: Date;
   poster?: string | Types.ObjectId;
+  searchText: string;
+  claimedBy: string[];
 }
 
 const itemSchema = new Schema({
@@ -61,13 +63,17 @@ const itemSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "User",
   },
+  searchText: {
+    type: String,
+    default: "",
+  },
   // An array of users who have tried to claim this item
-  claimedBy: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-    },
-  ],
+  claimedBy: {
+    type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    default: [],
+  },
 });
+
+itemSchema.index({ searchText: "text" });
 
 export default model<IItem>("Item", itemSchema);
