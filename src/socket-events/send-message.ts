@@ -9,14 +9,14 @@ export function handleSendMessage(socket: Socket) {
     async ({ content, chatRoom, sender, replyTo, type }) => {
       await ChatMessageService.createChatMessage(
         content,
-        sender,
+        socket.data.user._id,
         chatRoom,
         type
         // replyTo
       );
       io.to(chatRoom).emit(SocketEvents.ReceiveMessage, {
         content,
-        sender,
+        sender: socket.data.user._id,
         chatRoom,
         type,
       });

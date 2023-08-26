@@ -5,11 +5,10 @@ import { ChatRoomService } from "../modules/chatRoom";
 
 export async function handleCreateChat(socket: Socket) {
   socket.on(SocketEvents.CreateChat, async ({ user_target, user }) => {
-    socket.join(user_target);
-    socket.join(user);
-
     const newChat = await ChatRoomService.createChatRoom([user_target, user]);
+    socket.join(newChat._id);
 
+    // io.to(newChat._id).emit(SocketEvents.CreateChat, newChat);
     io.emit(SocketEvents.ReceiveCreateChat, {
       user,
       room: newChat,

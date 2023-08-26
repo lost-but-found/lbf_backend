@@ -49,7 +49,7 @@ const socketEvents = (io: any) => {
 
     socketManager.attachHandlers();
 
-    io.emit("user-connected", socket.user._id);
+    io.emit("user-connected", socket.data.user._id);
     io.emit("events-list", socketManager.getEventsList);
 
     socket.on("disconnecting", () => {

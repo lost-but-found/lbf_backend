@@ -7,26 +7,17 @@ export async function handleJoinNewChat(socket: Socket) {
   socket.on(
     SocketEvents.JoinNewChat,
     async ({ user_target, user, check, room_id }) => {
-      socket.join(user_target);
+      socket.join(room_id);
 
-      if (!check) {
-        //   const updatedRoom = await Room.findById(room_id).populate(['users', "messages"]);
-        //   const user_data = await User.findById(user);
+      const formattedRoom = ChatRoomService.joinChatRoom(
+        room_id,
+        socket.data.user._id
+      );
 
-        // const formattedRoom = {
-        //   _id: updatedRoom._id,
-        //   messages: updatedRoom.messages,
-        //   user: [user_data],
-        //   unreadMessages: 0,
-        // };
-
-        const formattedRoom = ChatRoomService.joinChatRoom(room_id, user);
-
-        io.to(user_target).emit(SocketEvents.ReceiveJoinNewChat, {
-          user,
-          room: formattedRoom,
-        });
-      }
+      io.to(user_target).emit(SocketEvents.ReceiveJoinNewChat, {
+        user: socket.data.user._id,
+        room: formattedRoom,
+      });
     }
   );
 }
