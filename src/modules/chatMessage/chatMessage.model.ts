@@ -24,6 +24,7 @@ interface IChatMessage extends Document {
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
+  replyTo?: Types.ObjectId;
 }
 
 const chatMessageSchema = new Schema<IChatMessage>({
@@ -54,6 +55,10 @@ const chatMessageSchema = new Schema<IChatMessage>({
   isDeleted: {
     type: Boolean,
     default: false,
+  },
+  replyTo: {
+    type: Schema.Types.ObjectId,
+    ref: "ChatMessage",
   },
   createdAt: {
     type: Date,
