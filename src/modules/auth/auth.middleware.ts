@@ -4,6 +4,7 @@ import { NextFunction, Request, Response } from "express";
 import { JWT_SECRET_KEY } from "../../config";
 import { sendResponse } from "../../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
+import AuthService from "./auth.service";
 
 // Extend the Request interface to include the user property when the middleware is used
 declare global {
@@ -15,7 +16,7 @@ declare global {
   }
 }
 
-const isAuth = (req: Request, res: Response, next: NextFunction) => {
+const isAuth = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader: any =
     req.headers.authorization || req.headers.Authorization;
 
@@ -29,26 +30,20 @@ const isAuth = (req: Request, res: Response, next: NextFunction) => {
   }
 
   const token: string = authHeader.split(" ")[1];
-  jwt.verify(
-    token,
-    JWT_SECRET_KEY,
-    (err: jwt.VerifyErrors | null, decoded: any) => {
-      if (err) {
-        console.log(err);
-        return sendResponse({
-          res,
-          status: StatusCodes.FORBIDDEN,
-          message: "Access token expired or invalid",
-          success: false,
-        });
-      }
+  const decoded = await AuthService.verifyAuthToken(token);
+  console.log({ decoded });
+  if (!decoded) {
+    return sendResponse({
+      res,
+      status: StatusCodes.UNAUTHORIZED,
+      message: "Invalid access token",
+      success: false,
+    });
+  }
 
-      req.user = decoded.user.email;
-      req.userId = decoded.user._id;
-
-      next();
-    }
-  );
+  req.user = decoded.user.email;
+  req.userId = decoded.user._id;
+  next();
 };
 
 const isWhitelisted = (req: Request, res: Response, next: NextFunction) => {

@@ -40,7 +40,7 @@ app.get("/", (req, res) => {
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  // path: "/socket",
+  path: "/socket",
   /* options */
 });
 
