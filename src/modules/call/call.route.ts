@@ -4,10 +4,10 @@ import { isAuth } from "../auth/auth.middleware";
 
 const router = express.Router();
 
-router.post("/calls", isAuth, CallController.createCall);
-router.get("/calls", isAuth, CallController.getCurrentUserCalls);
-router.put("/calls/:callId/end", isAuth, CallController.endCall);
-router.get("/calls/:callId", isAuth, CallController.getCallById);
-// router.get("/calls/users/:userId", CallController.getCallsByUserId);
+router.post("/", isAuth, CallController.createCall);
+router.get("/", isAuth, CallController.getCurrentUserCalls);
+router.put("/:callId/end", isAuth, CallController.endCall);
+router.get("/:callId", isAuth, CallController.getCallById);
+// router.get("/users/:userId", CallController.getCallsByUserId);
 
 export default router;

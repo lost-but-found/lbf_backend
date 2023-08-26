@@ -9,6 +9,7 @@ import { sendResponse } from "./utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import { ChatMessageRouter } from "./modules/chatMessage";
 import { ChatRoomRouter } from "./modules/chatRoom";
+import { CallRouter } from "./modules/call";
 
 const router: Router = Router();
 
@@ -18,6 +19,7 @@ router.use("/items", ItemRouter);
 router.use("/users", UserRouter);
 router.use("/chat-messages", ChatMessageRouter);
 router.use("/chats", ChatRoomRouter);
+router.use("/calls", CallRouter);
 
 const routes = (app: Application) => {
   app.use("/api/v1", router);
