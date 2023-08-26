@@ -1,4 +1,5 @@
 import { ItemModel } from "../item";
+import { IItem } from "../item/item.model";
 import User from "./user.model";
 
 class UserService {
@@ -19,7 +20,7 @@ class UserService {
     }
   };
 
-  async bookmarkItem(userId: string, itemId: string): Promise<boolean> {
+  async bookmarkItem(userId: string, itemId: string): Promise<IItem> {
     try {
       const user = await User.findById(userId);
       const item = await ItemModel.findById(itemId);
@@ -30,38 +31,58 @@ class UserService {
 
       // Check if the item is already bookmarked by the user
       if (user.bookmarked.includes(itemId)) {
-        user.bookmarked = user.bookmarked.filter(
-          (bookmarkedItemId) => bookmarkedItemId !== itemId
-        );
-        await user.save();
-        return false;
+        throw new Error("Item already bookmarked.");
       }
 
       user.bookmarked.push(itemId);
       await user.save();
-      return true;
+      return item;
     } catch (error) {
       throw new Error("Failed to bookmark item.");
     }
   }
 
+  async unbookmarkItem(userId: string, itemId: string): Promise<IItem> {
+    try {
+      const user = await User.findById(userId);
+      const item = await ItemModel.findById(itemId);
+
+      if (!user || !item) {
+        throw new Error("User or item not found.");
+      }
+
+      // Check if the item is bookmarked by the user
+      if (!user.bookmarked.includes(itemId)) {
+        throw new Error("Item not bookmarked.");
+      }
+
+      user.bookmarked = user.bookmarked.filter((id) => id !== itemId);
+      await user.save();
+      return item;
+    } catch (error) {
+      throw new Error("Failed to unbookmark item.");
+    }
+  }
+
   async getBookmarkedItems(userId: string, type?: string) {
     try {
-      const user = await User.findById(userId).populate("bookmarked");
+      const user = await User.findById(userId).populate<{
+        bookmarked: IItem[];
+      }>("bookmarked");
 
       if (!user) {
         throw new Error("User not found.");
       }
 
-      const query: {
-        type?: string;
-      } = {};
-
-      if (type) {
-        query.type = type;
-      }
-
-      const bookmarkedItems = user.bookmarked;
+      const bookmarkedItems = user.bookmarked.filter((item) => {
+        if (typeof item === "string") {
+          return true;
+        }
+        if (type) {
+          return item.type === type;
+        }
+        return true;
+      });
 
       return bookmarkedItems;
     } catch (error) {

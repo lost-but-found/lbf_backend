@@ -88,15 +88,6 @@ class UserController {
 
       const bookmarkedItem = await UserService.bookmarkItem(userId, itemId);
 
-      if (!bookmarkedItem) {
-        return sendResponse({
-          res,
-          status: StatusCodes.OK,
-          message: "Item unbookmarked!",
-          success: true,
-        });
-      }
-
       return sendResponse({
         res,
         status: StatusCodes.OK,
@@ -108,6 +99,31 @@ class UserController {
         res,
         status: StatusCodes.INTERNAL_SERVER_ERROR,
         message: "Failed to bookmark item.",
+        error: error,
+        success: false,
+      });
+    }
+  }
+
+  async unbookmarkItem(req: Request, res: Response) {
+    try {
+      const itemId = req.params.id;
+      const userId = req.userId;
+
+      const unbookmarkedItem = await UserService.unbookmarkItem(userId, itemId);
+
+      return sendResponse({
+        res,
+        status: StatusCodes.OK,
+        message: "Item unbookmarked!",
+        success: true,
+        data: unbookmarkedItem,
+      });
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "Failed to unbookmark item.",
         error: error,
         success: false,
       });

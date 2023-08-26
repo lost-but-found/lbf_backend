@@ -1,7 +1,7 @@
 import { Schema, Document, model, Types } from "mongoose";
 import { ItemTypeEnum } from "./item.type";
 
-interface IItem extends Document {
+export interface IItem extends Document {
   name: string;
   description?: string;
   type: ItemTypeEnum;
