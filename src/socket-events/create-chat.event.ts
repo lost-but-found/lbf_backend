@@ -10,7 +10,7 @@ export async function handleCreateChat(socket: Socket) {
 
     const newChat = await ChatRoomService.createChatRoom([user_target, user]);
 
-    io.to(user_target).emit(SocketEvents.ReceiveJoinNewChat, {
+    io.emit(SocketEvents.ReceiveCreateChat, {
       user,
       room: newChat,
     });

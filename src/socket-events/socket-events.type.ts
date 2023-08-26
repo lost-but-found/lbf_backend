@@ -1,6 +1,7 @@
 export enum SocketEvents {
   JoinChats = "join-chats",
   CreateChat = "create-chat",
+  ReceiveCreateChat = "receive-create-chat",
   JoinNewChat = "join-new-chat",
   ReceiveJoinNewChat = "receive-join-new-chat",
   RemoveChat = "remove-chat",
