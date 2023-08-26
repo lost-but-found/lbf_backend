@@ -77,6 +77,28 @@ class UserService {
       throw new Error("Failed to retrieve user.");
     }
   }
+
+  async updateOnlineStatus(userId: string, isOnline: boolean) {
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error("User not found.");
+      }
+      if (user.isOnline === isOnline) {
+        return;
+      }
+
+      if (!isOnline) {
+        user.lastSeen = new Date();
+        user.isOnline = false;
+      } else {
+        user.isOnline = true;
+      }
+      await user.save();
+    } catch (error) {
+      throw new Error("Failed to update online status.");
+    }
+  }
 }
 
 export default new UserService();

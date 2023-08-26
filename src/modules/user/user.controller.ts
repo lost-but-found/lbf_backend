@@ -140,6 +140,29 @@ class UserController {
       });
     }
   }
+
+  async updateOnlineStatus(req: Request, res: Response) {
+    try {
+      const userId = req.userId;
+      const { isOnline } = req.body;
+
+      await UserService.updateOnlineStatus(userId, isOnline);
+
+      return sendResponse({
+        res,
+        message: "Online status updated successfully.",
+        success: true,
+      });
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "Failed to update online status.",
+        error: error.message,
+        success: false,
+      });
+    }
+  }
 }
 
 export default new UserController();

@@ -7,6 +7,8 @@ import { ItemRouter } from "./modules/item";
 import { UserRouter } from "./modules/user";
 import { sendResponse } from "./utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
+import { ChatMessageRouter } from "./modules/chatMessage";
+import { ChatRoomRouter } from "./modules/chatRoom";
 
 const router: Router = Router();
 
@@ -14,6 +16,8 @@ router.use("/auth", AuthRouter);
 router.use("/category", CategoryRouter);
 router.use("/items", ItemRouter);
 router.use("/users", UserRouter);
+router.use("/chat-messages", ChatMessageRouter);
+router.use("/chats", ChatRoomRouter);
 
 const routes = (app: Application) => {
   app.use("/api/v1", router);

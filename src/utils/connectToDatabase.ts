@@ -9,12 +9,12 @@ const connectToDatabase = async (callback: () => void) => {
       // useNewUrlParser: true,
     });
     console.log("Connected to MongoDB");
+    callback();
   } catch (err) {
     console.error(err);
   }
   mongoose.connection.once("open", () => {
     console.log("Connected to MongoDB");
-    callback();
   });
 };
 

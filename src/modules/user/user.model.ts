@@ -1,6 +1,6 @@
 import { Schema, Document, model } from "mongoose";
 
-interface IUser extends Document {
+export interface IUser extends Document {
   name: string;
   email: string;
   photo?: string;
@@ -16,6 +16,8 @@ interface IUser extends Document {
     OTP: string;
   };
   refreshToken: string;
+  isOnline: boolean;
+  lastSeen: Date;
 }
 
 const userSchema = new Schema({
@@ -54,6 +56,8 @@ const userSchema = new Schema({
     OTP: String,
   },
   refreshToken: String,
+  isOnline: { type: Boolean, default: false },
+  lastSeen: { type: Date, default: Date.now },
 });
 
 // module.exports = mongoose.model("User", userSchema);

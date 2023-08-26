@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
-
+import { createServer } from "http";
+import { Server } from "socket.io";
 import express from "express";
 const app = express();
 
@@ -12,6 +13,7 @@ import connectToDatabase from "./utils/connectToDatabase";
 import routes from "./routes";
 import { isWhitelisted } from "./modules/auth/auth.middleware";
 import { PORT, SENDGRID_API_KEY } from "./config";
+import socketEvents from "./sockets";
 
 /* Sendgrid implementation */
 sgMail.setApiKey(SENDGRID_API_KEY);
@@ -36,9 +38,21 @@ app.get("/", (req, res) => {
   res.send("Health Check");
 });
 
-app.listen(PORT, () => {
-  // Connect to MongoDB
-  connectToDatabase(() => {});
-  routes(app);
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  // path: "/socket",
+  /* options */
+});
+
+socketEvents(io);
+routes(app);
+
+connectToDatabase(() => {
+  console.log(`Running on ${process.env.NODE_ENV} mode`);
+
+  httpServer.listen(PORT);
+
   console.log(`Server running on port ${PORT}`);
 });
+
+export { io };
