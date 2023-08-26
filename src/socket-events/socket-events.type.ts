@@ -1,5 +1,6 @@
 export enum SocketEvents {
-  JoinChats = "join-chat",
+  JoinChats = "join-chats",
+  CreateChat = "create-chat",
   JoinNewChat = "join-new-chat",
   ReceiveJoinNewChat = "receive-join-new-chat",
   RemoveChat = "remove-chat",
@@ -10,6 +11,7 @@ export enum SocketEvents {
   Typing = "typing",
   ReceiveTyping = "receive-typing",
   StopTyping = "stop-typing",
+  ReceiveStopTyping = "receive-stop-typing",
   SendMessage = "send-message",
   ReceiveMessage = "receive-message",
   ViewUnreadMessages = "view-unread-messages",

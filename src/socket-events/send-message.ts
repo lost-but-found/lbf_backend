@@ -6,22 +6,19 @@ import { ChatMessageService } from "../modules/chatMessage";
 export function handleSendMessage(socket: Socket) {
   socket.on(
     SocketEvents.SendMessage,
-    async ({ messageData, room, sender, replyTo, type }) => {
-      // const unreadMessages = await Messages.create({
-      //   user: messageData.user,
-      //   message: messageData,
-      //   to: messageData.assignedTo
-      // });
-
+    async ({ content, chatRoom, sender, replyTo, type }) => {
       await ChatMessageService.createChatMessage(
-        messageData,
+        content,
         sender,
-        room,
+        chatRoom,
         type
+        // replyTo
       );
-      io.to(room).emit(SocketEvents.ReceiveMessage, {
-        messageData,
-        // unreadMessages
+      io.to(chatRoom).emit(SocketEvents.ReceiveMessage, {
+        content,
+        sender,
+        chatRoom,
+        type,
       });
     }
   );

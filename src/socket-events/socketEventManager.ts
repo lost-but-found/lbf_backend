@@ -1,4 +1,5 @@
 import { Socket } from "socket.io";
+import { SocketEvents } from "./socket-events.type";
 
 type SocketHandler = (socket: Socket) => void;
 
@@ -20,6 +21,10 @@ class SocketEventManager {
       handler(this.socket);
       console.log("Attached event handler: ", handler.name);
     });
+  }
+
+  get getEventsList() {
+    return Object.values(SocketEvents);
   }
 }
 
