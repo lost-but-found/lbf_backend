@@ -3,8 +3,15 @@ import { IUser } from "../user";
 import { ObjectId } from "mongoose";
 
 class ChatRoomService {
-  async createChatRoom(users: IUser[]): Promise<IChatRoom> {
+  async createChatRoom(users: string[]): Promise<IChatRoom> {
     try {
+      // Check if chat room already exists
+      const chatRoom = await ChatRoomModel.findOne({
+        users: { $all: users },
+      });
+      if (chatRoom) {
+        return chatRoom;
+      }
       const newChatRoom = await ChatRoomModel.create({ users });
       return newChatRoom;
     } catch (error) {
