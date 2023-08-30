@@ -1,3 +1,4 @@
+import FCM from "../../utils/fcm";
 import { NotificationModel, INotification } from "./notification.model";
 import { Types } from "mongoose";
 
@@ -37,6 +38,22 @@ class NotificationService {
     } catch (error) {
       throw new Error("Failed to fetch notifications for user.");
     }
+  }
+
+  async sendPushNotification(
+    title: string,
+    body: string,
+    userDeviceTokens: string[]
+  ) {
+    FCM.sendPushNotificationToUser(userDeviceTokens, title, body);
+  }
+
+  async sendGlobalPushNotification(
+    title: string,
+    body: string,
+    userDeviceTokens: string[]
+  ) {
+    FCM.sendPushNotificationToGeneral(title, body);
   }
 }
 
