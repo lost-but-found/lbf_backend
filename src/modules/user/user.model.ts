@@ -16,6 +16,7 @@ export interface IUser extends Document {
     OTP: string;
   };
   refreshToken: string;
+  deviceToken?: string;
   isOnline: boolean;
   lastSeen: Date;
 }
@@ -56,6 +57,7 @@ const userSchema = new Schema({
     OTP: String,
   },
   refreshToken: String,
+  deviceToken: String,
   isOnline: { type: Boolean, default: false },
   lastSeen: { type: Date, default: Date.now },
 });

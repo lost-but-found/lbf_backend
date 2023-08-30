@@ -6,15 +6,19 @@ import {
 } from "../config";
 import moment from "moment";
 
+const firebaseConfig = {
+    credential: admin.credential.cert({
+      projectId: FIREBASE_PROJECT_ID,
+      privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      clientEmail: FIREBASE_CLIENT_EMAIL,
+    }),
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
+  }
+
+
+
 // Initialize Firebase Admin SDK
-admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: FIREBASE_PROJECT_ID,
-    privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-    clientEmail: FIREBASE_CLIENT_EMAIL,
-  }),
-  databaseURL: process.env.FIREBASE_DATABASE_URL,
-});
+admin.initializeApp(firebaseConfig);
 
 class FCM {
   static sendPushNotificationToGeneral(

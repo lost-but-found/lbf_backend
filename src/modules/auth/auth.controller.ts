@@ -13,7 +13,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const login = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, deviceToken } = req.body;
   if (!email || !password)
     return res
       .status(400)
@@ -41,7 +41,7 @@ const login = async (req: Request, res: Response) => {
         },
       },
       JWT_SECRET_KEY,
-      { expiresIn: "1d" }
+      { expiresIn: "7d" }
     );
     const refreshToken = jwt.sign(
       {
@@ -51,13 +51,17 @@ const login = async (req: Request, res: Response) => {
         },
       },
       JWT_SECRET_KEY,
-      { expiresIn: "5d" }
+      { expiresIn: "21d" }
     );
 
     // Saving refreshToken with current user
     foundUser.refreshToken = refreshToken;
+    if (deviceToken) {
+      foundUser.deviceToken = deviceToken
+    }
     const result = await foundUser.save();
     console.log(result);
+
 
     res.cookie("jwt", refreshToken, {
       httpOnly: true,
