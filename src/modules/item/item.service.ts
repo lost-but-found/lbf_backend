@@ -2,6 +2,7 @@ import ItemModel from "./item.model";
 import { CategoryModel } from "../category";
 import { UserModel } from "../user";
 import { uploadImageToCloudinary } from "../../utils/cloudinary";
+import { EventEmitter, EventEmitterEvents } from "../../events";
 
 class ItemService {
   async getItems(query: any, page: number, limit: number) {
@@ -160,6 +161,7 @@ class ItemService {
       // Mark the item as claimed by the user
       item.claimedBy.push(userId);
       await item.save();
+      EventEmitter.emit(EventEmitterEvents.ItemClaimed, item.poster);
     } catch (error) {
       throw new Error("Failed to claim item.");
     }

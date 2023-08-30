@@ -120,6 +120,19 @@ class UserService {
       throw new Error("Failed to update online status.");
     }
   }
+
+  async getUserDeviceTokens(userId: string): Promise<string> {
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error("User not found.");
+      }
+
+      return user?.deviceToken ?? "";
+    } catch (error) {
+      throw new Error("Failed to update online status.");
+    }
+  }
 }
 
 export default new UserService();
