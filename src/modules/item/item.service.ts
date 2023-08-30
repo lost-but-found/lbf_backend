@@ -161,7 +161,9 @@ class ItemService {
       // Mark the item as claimed by the user
       item.claimedBy.push(userId);
       await item.save();
-      EventEmitter.emit(EventEmitterEvents.ItemClaimed, item.poster);
+      EventEmitter.emit(EventEmitterEvents.ItemClaimed, {
+        userId: item.poster,
+      });
     } catch (error) {
       throw new Error("Failed to claim item.");
     }
