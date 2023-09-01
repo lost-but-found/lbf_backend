@@ -4,7 +4,7 @@ import { isAuth } from "../auth/auth.middleware";
 
 const UserRouter: Router = express.Router();
 
-UserRouter.get("/", isAuth, UserController.getAllUsers);
+UserRouter.get("/", isAuth, UserController.getUsers);
 
 UserRouter.get("/bookmarks", isAuth, UserController.getBookmarkedItems);
 UserRouter.post("/bookmarks/:id", isAuth, UserController.bookmarkItem);

@@ -1,3 +1,4 @@
+import { UserModel } from ".";
 import { ItemModel } from "../item";
 import { IItem } from "../item/item.model";
 import User from "./user.model";
@@ -90,9 +91,31 @@ class UserService {
     }
   }
 
+  async getUsers(page = 1, pageSize = 10, query = {}) {
+    try {
+      const skip = (page - 1) * pageSize;
+      const [users, totalUsersCount] = await Promise.all([
+        UserModel.find(query)
+          .sort({ createdAt: -1 })
+          .select("-password") // Exclude the password field
+          .skip(skip)
+          .limit(pageSize)
+          .exec(),
+        UserModel.countDocuments(query),
+      ]);
+
+      return {
+        users,
+        totalUsersCount,
+      };
+    } catch (error) {
+      throw new Error("Failed to retrieve users.");
+    }
+  }
+
   async getUser(userId: string) {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).select("-password").exec();
       return user;
     } catch (error) {
       throw new Error("Failed to retrieve user.");

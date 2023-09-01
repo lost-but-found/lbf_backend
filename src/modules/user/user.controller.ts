@@ -6,15 +6,38 @@ import { StatusCodes } from "http-status-codes";
 import UserService from "./user.service";
 
 class UserController {
-  getAllUsers = async (req: Request, res: Response) => {
+  async getUsers(req: Request, res: Response) {
     try {
-      const allUsers = await User.find();
-      res.send(allUsers);
-    } catch (error) {
-      res.send({ error });
-    }
-  };
+      const { page, limit, query } = req.query as {
+        page?: number;
+        limit?: number;
+        query?: Record<string, any>;
+      };
 
+      const result = await UserService.getUsers(page, limit, query);
+
+      return sendResponse({
+        res,
+        message: "Users retrieved successfully.",
+        data: {
+          users: result.users,
+          page,
+          limit,
+          total: result.totalUsersCount,
+          hasMore: result.users.length < result.totalUsersCount,
+        },
+        success: true,
+      });
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "Failed to retrieve users.",
+        error: error.message,
+        success: false,
+      });
+    }
+  }
   updateUser = async (req: Request, res: Response) => {
     const { email, phone } = req.body;
 
@@ -39,8 +62,21 @@ class UserController {
       user.phone = phone;
       user.photo = normalizedProfileImagePath;
       await user.save();
+      return sendResponse({
+        res,
+        status: StatusCodes.OK,
+        success: true,
+        message: "User data updated",
+        data: user,
+      });
     } catch (error) {
       console.log("An error occured:", error);
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        success: false,
+        message: "Could not update User",
+      });
     }
   };
 
@@ -49,14 +85,38 @@ class UserController {
 
     if (id) {
       try {
-        const user = await User.findById(id);
-        res.status(200).json(user);
+        const user = await UserService.getUser(id);
+        if (!user) {
+          return sendResponse({
+            res,
+            status: StatusCodes.NOT_FOUND,
+            success: false,
+            message: "User not found",
+          });
+        }
+        return sendResponse({
+          res,
+          status: StatusCodes.OK,
+          success: true,
+          message: "User data found",
+          data: user,
+        });
       } catch (err) {
-        res.status(500).send({ error: "An error occured" });
         console.log(err);
+        return sendResponse({
+          res,
+          status: StatusCodes.INTERNAL_SERVER_ERROR,
+          success: false,
+          message: "Could not find User",
+        });
       }
     } else {
-      res.status(404).send({ error: "User not found." });
+      return sendResponse({
+        res,
+        status: StatusCodes.NOT_FOUND,
+        success: false,
+        message: "User not found",
+      });
     }
   };
 
@@ -64,7 +124,14 @@ class UserController {
     try {
       const userId = req.userId;
       const user = await UserService.getUser(userId);
-
+      if (!user) {
+        return sendResponse({
+          res,
+          status: StatusCodes.NOT_FOUND,
+          success: false,
+          message: "User not found",
+        });
+      }
       return sendResponse({
         res,
         message: "User profile retrieved successfully.",
