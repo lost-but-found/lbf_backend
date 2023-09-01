@@ -74,6 +74,15 @@ const itemSchema = new Schema({
   },
 });
 
-itemSchema.index({ searchText: "text" });
+itemSchema.index(
+  { name: "text", searchText: "text", description: "text" },
+  {
+    weights: {
+      name: 5,
+      searchText: 2,
+      description: 1,
+    },
+  }
+);
 
 export default model<IItem>("Item", itemSchema);
