@@ -75,12 +75,11 @@ const itemSchema = new Schema({
 });
 
 itemSchema.index(
-  { name: "text", searchText: "text", description: "text" },
+  { name: "text", searchText: "text" },
   {
     weights: {
-      name: 5,
-      searchText: 2,
-      description: 1,
+      name: 2,
+      searchText: 1,
     },
   }
 );

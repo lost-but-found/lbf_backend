@@ -99,13 +99,7 @@ class ItemService {
       );
 
       // Concatenate relevant fields' values for the searchText field
-      const searchText = [
-        name,
-        description,
-        category,
-        location,
-        extraInfo,
-      ].join(" ");
+      const searchText = [description, category, location, extraInfo].join(" ");
 
       const result = await ItemModel.create({
         name,
