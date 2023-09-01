@@ -32,36 +32,18 @@ const login = async (req: Request, res: Response) => {
   // evaluate password
   const match = await bcrypt.compare(password, foundUser.password);
   if (match) {
-    // create JWTs
-    const accessToken = jwt.sign(
-      {
-        user: {
-          _id: foundUser._id,
-          email: foundUser.email,
-        },
-      },
-      JWT_SECRET_KEY,
-      { expiresIn: "7d" }
-    );
-    const refreshToken = jwt.sign(
-      {
-        user: {
-          _id: foundUser._id,
-          email: foundUser.email,
-        },
-      },
-      JWT_SECRET_KEY,
-      { expiresIn: "21d" }
-    );
+    const { accessToken, refreshToken } = AuthService.generateJWTToken({
+      _id: foundUser._id,
+      email: foundUser.email,
+    });
 
     // Saving refreshToken with current user
     foundUser.refreshToken = refreshToken;
     if (deviceToken) {
-      foundUser.deviceToken = deviceToken
+      foundUser.deviceToken = deviceToken;
     }
     const result = await foundUser.save();
     console.log(result);
-
 
     res.cookie("jwt", refreshToken, {
       httpOnly: true,
@@ -242,12 +224,17 @@ const register = async (req: Request, res: Response) => {
     await sgMail.send(msg);
     console.log(`OTP sent to ${email}`);
 
+    const { accessToken, refreshToken } = AuthService.generateJWTToken({
+      _id: result._id,
+      email: result.email,
+    });
+
     return sendResponse({
       res,
       status: StatusCodes.CREATED,
       message: "New user created!",
       success: true,
-      data: { userId: result._id },
+      data: { userId: result._id, accessToken, refreshToken },
     });
   } catch (err: any) {
     return sendResponse({

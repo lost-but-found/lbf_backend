@@ -86,7 +86,31 @@ export async function verifyAuthToken(token: string): Promise<{
   }
 }
 
+export function generateJWTToken(user: { _id: string; email: string }) {
+  // create JWTs
+  const accessToken = jwt.sign(
+    {
+      user,
+    },
+    JWT_SECRET_KEY,
+    { expiresIn: "7d" }
+  );
+  const refreshToken = jwt.sign(
+    {
+      user,
+    },
+    JWT_SECRET_KEY,
+    { expiresIn: "21d" }
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+}
+
 const AuthService = {
+  generateJWTToken,
   generateOTPService,
   sendOTPService,
   verifyUserEmail,
