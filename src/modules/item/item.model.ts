@@ -5,6 +5,7 @@ export interface IItem extends Document {
   name: string;
   description?: string;
   type: ItemTypeEnum;
+  isFound: boolean;
   category: string;
   itemImg?: string;
   date?: string;
@@ -32,15 +33,19 @@ const itemSchema = new Schema({
   },
   otherImgs: [{ type: String }],
   category: {
-    type: Types.ObjectId,
-    ref: "Category",
+    type: String,
+
     required: true,
   },
-  type: {
-    type: String,
-    // Use ItemTypeEnum as the enum values
-    enum: Object.values(ItemTypeEnum),
-    default: "lost",
+  // type: {
+  //   type: String,
+  //   // Use ItemTypeEnum as the enum values
+  //   enum: Object.values(ItemTypeEnum),
+  //   default: "lost",
+  // },
+  isFound: {
+    type: Boolean,
+    default: false,
   },
   date: {
     type: String,
@@ -73,6 +78,14 @@ const itemSchema = new Schema({
     default: [],
   },
 });
+
+// Define the virtual field 'type'
+itemSchema.virtual("type").get(function () {
+  return this.isFound ? "found" : "lost";
+});
+
+// Ensure the virtual field is included when converting to JSON
+itemSchema.set("toJSON", { virtuals: true });
 
 itemSchema.index(
   { name: "text", searchText: "text" },

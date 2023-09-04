@@ -2,21 +2,37 @@ import { Request, Response } from "express";
 import { sendResponse } from "../../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import ItemService from "./item.service";
+import buildDateQuery from "../../utils/buildDateQuery";
 
 class ItemController {
   async getItems(req: Request, res: Response) {
     try {
-      const { category, location, date_from, date_to, type, poster } =
-        req.query;
+      const {
+        category,
+        location,
+        date_from,
+        date_to,
+        // type,
+        isFound,
+        poster,
+      } = req.query;
       const { page, limit } = req.query;
 
       let query: any = {};
 
       if (category) query.category = category;
       if (location) query.location = location;
-      if (type) query.type = type;
+      // if (type) query.type = type;
+      if (isFound) query.isFound = isFound;
       if (poster) query.poster = poster;
-      query = { ...query, ...this.buildQuery(req.query) };
+      const dateQuery = buildDateQuery({
+        date_from: date_from?.toString(),
+        date_to: date_to?.toString(),
+      });
+      query = {
+        ...query,
+        ...dateQuery,
+      };
 
       const pageAsNumber = parseInt((page ?? "0") as string);
       const limitAsNumber = parseInt((limit ?? "10") as string);
@@ -40,6 +56,7 @@ class ItemController {
         success: true,
       });
     } catch (error: any) {
+      console.log({ error });
       return sendResponse({
         res,
         status: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -52,16 +69,6 @@ class ItemController {
 
   async addItem(req: Request, res: Response) {
     try {
-      const {
-        name,
-        description,
-        type,
-        category,
-        location,
-        extraInfo,
-        date,
-        time,
-      } = req.body;
       const poster = req.userId;
 
       let itemImgs: Buffer[] = [];
@@ -73,14 +80,7 @@ class ItemController {
       }
 
       const data = {
-        name,
-        description,
-        type,
-        category,
-        location,
-        extraInfo,
-        date,
-        time,
+        ...req.body,
         itemImgs,
       };
 
@@ -222,29 +222,6 @@ class ItemController {
       });
     }
   }
-
-  buildQuery = (query: any) => {
-    const queryObj: any = {};
-    // const excludedFields = ["page", "sort", "limit", "fields"];
-    // excludedFields.forEach((el) => delete query[el]);
-
-    if (query.date_from && query.date_to) {
-      queryObj.createdAt = {
-        $gte: new Date(query.date_from as string),
-        $lte: new Date(query.date_to as string),
-      };
-    } else if (query.date_from) {
-      queryObj.createdAt = {
-        $gte: new Date(query.date_from as string),
-      };
-    } else if (query.date_to) {
-      queryObj.createdAt = {
-        $lte: new Date(query.date_to as string),
-      };
-    }
-
-    return queryObj;
-  };
 }
 
 export default new ItemController();
