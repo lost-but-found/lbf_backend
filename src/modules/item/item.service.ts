@@ -84,7 +84,8 @@ class ItemService {
       const {
         name,
         description,
-        type,
+        // type,
+        isFound,
         category,
         location,
         extraInfo,
@@ -104,7 +105,8 @@ class ItemService {
       const result = await ItemModel.create({
         name,
         description,
-        type,
+        // type,
+        isFound: isFound.trim() === "true",
         date,
         time,
         category,

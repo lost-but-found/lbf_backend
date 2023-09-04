@@ -1,7 +1,11 @@
 import { isValidObjectId } from "mongoose";
 import { ItemTypeEnum } from "./../item.type";
-import { any, nativeEnum, object, string, TypeOf } from "zod";
+import { any, nativeEnum, array, object, string, TypeOf } from "zod";
 
+enum BooleanString {
+  TRUE = "true",
+  FALSE = "false",
+}
 export const createItemSchema = object({
   body: object({
     name: string({
@@ -16,19 +20,22 @@ export const createItemSchema = object({
     photos: string().optional(),
     location: string().optional(),
 
-    type: nativeEnum(ItemTypeEnum, {
-      required_error: "Type is required",
+    // type: nativeEnum(ItemTypeEnum, {
+    //   required_error: "Type is required",
+    // }),
+
+    isFound: nativeEnum(BooleanString, {
+      required_error: "isFound is required",
     }),
     date: string().optional(),
     time: string().optional(),
     additional_description: string()
       .min(2, "Additional Description is too short - should be 2 chars minimum")
       .optional(),
-    // Check if category is a valid mogoose object id
-  }).refine((data) => isValidObjectId(data.category), {
-    message: "Category is not a valid id",
-    path: ["category"],
   }),
+  files: array(any())
+    .min(1, "At least one file is required")
+    .max(4, "Maximum of four images allowed"),
 });
 
 export type RegisterUserInput = TypeOf<typeof createItemSchema>;
