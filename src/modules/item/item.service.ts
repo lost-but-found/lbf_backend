@@ -37,6 +37,7 @@ class ItemService {
 
       const [items, totalItemsCount] = await Promise.all([
         ItemModel.find(textSearchQuery)
+          .select("-searchText")
           .sort({ createdAt: -1 })
           .skip(skipCount)
           .limit(limit),
@@ -134,7 +135,7 @@ class ItemService {
 
   async getItem(itemId: string) {
     try {
-      return await ItemModel.findById(itemId);
+      return await ItemModel.findById(itemId).select("-searchText").exec();
     } catch (error) {
       throw new Error("Failed to retrieve item.");
     }
