@@ -95,10 +95,7 @@ class ItemService {
         itemImgs,
       } = data;
 
-      const itemImgUrl = await uploadImageToCloudinary(itemImgs[0]);
-      const otherImgUrls = await Promise.all(
-        itemImgs.slice(1).map(uploadImageToCloudinary)
-      );
+      const imgUrls = await Promise.all(itemImgs.map(uploadImageToCloudinary));
 
       // Concatenate relevant fields' values for the searchText field
       const searchText = [description, category, location, extraInfo].join(" ");
@@ -112,8 +109,7 @@ class ItemService {
         time,
         category,
         location,
-        itemImg: itemImgUrl,
-        otherImgs: otherImgUrls,
+        images: imgUrls,
         extraInfo,
         poster: userId,
         searchText,

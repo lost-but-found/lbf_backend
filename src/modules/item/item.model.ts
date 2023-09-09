@@ -28,10 +28,7 @@ const itemSchema = new Schema({
   description: {
     type: String,
   },
-  itemImg: {
-    type: String,
-  },
-  otherImgs: [{ type: String }],
+  images: [{ type: String }],
   category: {
     type: String,
 

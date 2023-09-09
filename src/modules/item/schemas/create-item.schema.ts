@@ -33,9 +33,7 @@ export const createItemSchema = object({
       .min(2, "Additional Description is too short - should be 2 chars minimum")
       .optional(),
   }),
-  files: array(any())
-    .min(1, "At least one file is required")
-    .max(4, "Maximum of four images allowed"),
+  files: array(any()).length(4, "Must be four images"),
 });
 
 export type RegisterUserInput = TypeOf<typeof createItemSchema>;
