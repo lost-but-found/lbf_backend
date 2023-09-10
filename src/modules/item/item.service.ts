@@ -1,11 +1,12 @@
 import ItemModel from "./item.model";
 import { CategoryModel } from "../category";
-import { UserModel } from "../user";
+import { UserModel, UserService } from "../user";
 import { uploadImageToCloudinary } from "../../utils/cloudinary";
 import { EventEmitter, EventEmitterEvents } from "../../events";
+import { PipelineStage } from "mongoose";
 
 class ItemService {
-  async getItems(query: any, page: number, limit: number) {
+  async getItems2(query: any, page: number, limit: number) {
     try {
       const skipCount = page * limit;
       const [items, totalItemsCount] = await Promise.all([
@@ -15,12 +16,154 @@ class ItemService {
           .limit(limit),
         ItemModel.countDocuments(query),
       ]);
+      // const bookmarks = await UserService.getBookmarkedItems()
+      return {
+        items,
+        totalItemsCount,
+        // bookmarks:
+      };
+    } catch (error) {
+      throw new Error("Failed to retrieve items.");
+    }
+  }
+  async getItems(userId: string, query: any, page: number, limit: number) {
+    try {
+      console.log({ page, limit });
+      const skipCount = Math.max(page - 1, 0) * limit;
+
+      // Aggregate to fetch items and user's bookmarked items
+      const aggregationPipeline2: PipelineStage[] = [
+        {
+          $match: query, // Apply your query conditions
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $skip: skipCount,
+        },
+        {
+          $limit: limit,
+        },
+        {
+          $addFields: {
+            // Convert 'currentUserId' to ObjectId type
+            currentUserIdObjectId: { $toObjectId: userId },
+          },
+        },
+        {
+          $lookup: {
+            from: "users", // Replace with the actual name of the User collection
+            localField: "currentUserIdObjectId", // Use the converted currentUserIdObjectId
+            foreignField: "_id",
+            as: "currentUserDetails",
+          },
+        },
+        {
+          $addFields: {
+            // Use $arrayElemAt to extract the first (and only) element of the 'currentUserDetails' array
+            currentUserDetails: { $arrayElemAt: ["$currentUserDetails", 0] },
+          },
+        },
+        {
+          $project: {
+            _id: 1, // Include other item fields as needed
+            name: 1,
+            description: 1,
+            category: 1,
+            // type: 1,
+            isFound: 1,
+            date: 1,
+            time: 1,
+            location: 1,
+            additional_description: 1,
+            createdAt: 1,
+            poster: 1,
+            claimedBy: 1,
+            // Include only the 'bookmarked' field from 'currentUserDetails'
+            isBookmarked: {
+              $in: ["$_id", "$currentUserDetails.bookmarked"],
+            },
+          },
+        },
+      ];
+
+      const aggregationPipeline: PipelineStage[] = [
+        {
+          $match: query,
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $skip: skipCount,
+        },
+        {
+          $limit: limit,
+        },
+        {
+          $lookup: {
+            from: "users",
+            let: { userId: { $toObjectId: userId } },
+            pipeline: [
+              {
+                $match: { $expr: { $eq: ["$_id", "$$userId"] } },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  bookmarked: 1,
+                },
+              },
+            ],
+            as: "currentUserDetails",
+          },
+        },
+        {
+          $set: {
+            currentUserDetails: { $arrayElemAt: ["$currentUserDetails", 0] },
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            category: 1,
+            isFound: 1,
+            date: 1,
+            time: 1,
+            location: 1,
+            additional_description: 1,
+            createdAt: 1,
+            poster: 1,
+            claimedBy: 1,
+            isBookmarked: { $in: ["$_id", "$currentUserDetails.bookmarked"] },
+          },
+        },
+      ];
+
+      const items = await ItemModel.aggregate(aggregationPipeline);
+
+      // Find the user to get their bookmarked item IDs
+      const user = await UserModel.findById(userId);
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      // Extract the bookmarked item IDs from the user document
+      const bookmarkedItemIds = user.bookmarked || [];
+
+      const totalItemsCount = items.length;
 
       return {
         items,
         totalItemsCount,
+        bookmarkedItems: bookmarkedItemIds, // Include the bookmarked item IDs in the response
       };
     } catch (error) {
+      console.log({ error });
       throw new Error("Failed to retrieve items.");
     }
   }

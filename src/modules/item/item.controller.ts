@@ -34,10 +34,11 @@ class ItemController {
         ...dateQuery,
       };
 
-      const pageAsNumber = parseInt((page ?? "0") as string);
+      const pageAsNumber = parseInt((page ?? "1") as string);
       const limitAsNumber = parseInt((limit ?? "10") as string);
-
+      console.log({ query });
       const result = await ItemService.getItems(
+        req.userId,
         query,
         pageAsNumber,
         limitAsNumber
