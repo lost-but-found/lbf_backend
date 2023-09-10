@@ -89,7 +89,7 @@ class ItemService {
         isFound,
         category,
         location,
-        extraInfo,
+        additional_description,
         date,
         time,
         itemImgs,
@@ -98,7 +98,12 @@ class ItemService {
       const imgUrls = await Promise.all(itemImgs.map(uploadImageToCloudinary));
 
       // Concatenate relevant fields' values for the searchText field
-      const searchText = [description, category, location, extraInfo].join(" ");
+      const searchText = [
+        description,
+        category,
+        location,
+        additional_description,
+      ].join(" ");
 
       const result = await ItemModel.create({
         name,
@@ -110,7 +115,7 @@ class ItemService {
         category,
         location,
         images: imgUrls,
-        extraInfo,
+        additional_description,
         poster: userId,
         searchText,
       });

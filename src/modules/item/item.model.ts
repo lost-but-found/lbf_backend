@@ -53,7 +53,7 @@ const itemSchema = new Schema({
   location: {
     type: String,
   },
-  extraInfo: {
+  additional_description: {
     type: String,
   },
   createdAt: {
