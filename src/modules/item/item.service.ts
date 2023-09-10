@@ -133,6 +133,7 @@ class ItemService {
             isFound: 1,
             date: 1,
             time: 1,
+            images: 1,
             location: 1,
             additional_description: 1,
             createdAt: 1,
