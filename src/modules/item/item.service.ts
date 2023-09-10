@@ -145,22 +145,11 @@ class ItemService {
 
       const items = await ItemModel.aggregate(aggregationPipeline);
 
-      // Find the user to get their bookmarked item IDs
-      const user = await UserModel.findById(userId);
-
-      if (!user) {
-        throw new Error("User not found");
-      }
-
-      // Extract the bookmarked item IDs from the user document
-      const bookmarkedItemIds = user.bookmarked || [];
-
       const totalItemsCount = items.length;
 
       return {
         items,
         totalItemsCount,
-        bookmarkedItems: bookmarkedItemIds, // Include the bookmarked item IDs in the response
       };
     } catch (error) {
       console.log({ error });
@@ -280,6 +269,32 @@ class ItemService {
   async getItem(itemId: string) {
     try {
       return await ItemModel.findById(itemId).select("-searchText").exec();
+    } catch (error) {
+      throw new Error("Failed to retrieve item.");
+    }
+  }
+
+  async getItemWithBookmarkStatus(itemId: string, currentUser: string) {
+    try {
+      const [item, user] = await Promise.all([
+        ItemModel.findById(itemId).select("-searchText").exec(),
+        UserService.getUser(currentUser),
+      ]);
+
+      if (!item) {
+        throw new Error("Item not found.");
+      }
+
+      // Check if the current user has bookmarked the item
+      const isBookmarked = user ? user.bookmarked.includes(itemId) : false;
+
+      // Add the isBookmarked property to the item
+      const itemWithBookmarkStatus = {
+        ...item.toObject(),
+        isBookmarked,
+      };
+
+      return itemWithBookmarkStatus;
     } catch (error) {
       throw new Error("Failed to retrieve item.");
     }
