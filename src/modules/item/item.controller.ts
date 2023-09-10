@@ -3,6 +3,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import ItemService from "./item.service";
 import buildDateQuery from "../../utils/buildDateQuery";
+import mongoose from "mongoose";
 
 class ItemController {
   async getItems(req: Request, res: Response) {
@@ -24,7 +25,8 @@ class ItemController {
       if (location) query.location = location;
       // if (type) query.type = type;
       if (isFound) query.isFound = isFound;
-      if (poster) query.poster = poster;
+      if (poster)
+        query.poster = new mongoose.Types.ObjectId(poster?.toString());
       const dateQuery = buildDateQuery({
         date_from: date_from?.toString(),
         date_to: date_to?.toString(),
