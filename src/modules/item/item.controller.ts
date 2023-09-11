@@ -4,6 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import ItemService from "./item.service";
 import buildDateQuery from "../../utils/buildDateQuery";
 import mongoose from "mongoose";
+import { BooleanString } from "./item.type";
 
 class ItemController {
   async getItems(req: Request, res: Response) {
@@ -24,7 +25,8 @@ class ItemController {
       if (category) query.category = category;
       if (location) query.location = location;
       // if (type) query.type = type;
-      if (isFound) query.isFound = isFound;
+      if (isFound)
+        query.isFound = isFound ? isFound === BooleanString.TRUE : undefined;
       if (poster)
         query.poster = new mongoose.Types.ObjectId(poster?.toString());
       const dateQuery = buildDateQuery({

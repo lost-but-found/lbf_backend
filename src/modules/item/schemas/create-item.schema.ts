@@ -1,11 +1,7 @@
 import { isValidObjectId } from "mongoose";
-import { ItemTypeEnum } from "./../item.type";
+import { BooleanString, ItemTypeEnum } from "./../item.type";
 import { any, nativeEnum, array, object, string, TypeOf } from "zod";
 
-enum BooleanString {
-  TRUE = "true",
-  FALSE = "false",
-}
 export const createItemSchema = object({
   body: object({
     name: string({
