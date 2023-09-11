@@ -154,7 +154,14 @@ class UserController {
       const userId = req.userId;
 
       const bookmarkedItem = await UserService.bookmarkItem(userId, itemId);
-
+      if (!bookmarkedItem) {
+        return sendResponse({
+          res,
+          status: StatusCodes.NOT_FOUND,
+          message: "Item not found.",
+          success: false,
+        });
+      }
       return sendResponse({
         res,
         status: StatusCodes.OK,
@@ -162,10 +169,11 @@ class UserController {
         success: true,
       });
     } catch (error: any) {
+      console.log({ error });
       return sendResponse({
         res,
         status: StatusCodes.INTERNAL_SERVER_ERROR,
-        message: "Failed to bookmark item.",
+        message: error?.message ?? error ?? "Failed to bookmark item.",
         error: error,
         success: false,
       });
@@ -179,6 +187,14 @@ class UserController {
 
       const unbookmarkedItem = await UserService.unbookmarkItem(userId, itemId);
 
+      if (!unbookmarkedItem) {
+        return sendResponse({
+          res,
+          status: StatusCodes.NOT_FOUND,
+          message: "Item not found.",
+          success: false,
+        });
+      }
       return sendResponse({
         res,
         status: StatusCodes.OK,
@@ -190,7 +206,7 @@ class UserController {
       return sendResponse({
         res,
         status: StatusCodes.INTERNAL_SERVER_ERROR,
-        message: "Failed to unbookmark item.",
+        message: error?.message ?? "Failed to unbookmark item.",
         error: error,
         success: false,
       });

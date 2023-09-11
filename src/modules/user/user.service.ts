@@ -21,13 +21,15 @@ class UserService {
     }
   };
 
-  async bookmarkItem(userId: string, itemId: string): Promise<IItem> {
+  async bookmarkItem(userId: string, itemId: string): Promise<IItem | null> {
     try {
-      const user = await User.findById(userId);
-      const item = await ItemModel.findById(itemId);
-
+      const [user, item] = await Promise.all([
+        User.findById(userId),
+        ItemModel.findById(itemId),
+      ]);
       if (!user || !item) {
-        throw new Error("User or item not found.");
+        return null;
+        // throw new Error("User or item not found.");
       }
 
       // Check if the item is already bookmarked by the user
@@ -43,13 +45,14 @@ class UserService {
     }
   }
 
-  async unbookmarkItem(userId: string, itemId: string): Promise<IItem> {
+  async unbookmarkItem(userId: string, itemId: string): Promise<IItem | null> {
     try {
-      const user = await User.findById(userId);
-      const item = await ItemModel.findById(itemId);
-
+      const [user, item] = await Promise.all([
+        User.findById(userId),
+        ItemModel.findById(itemId),
+      ]);
       if (!user || !item) {
-        throw new Error("User or item not found.");
+        return null;
       }
 
       // Check if the item is bookmarked by the user
@@ -57,7 +60,10 @@ class UserService {
         throw new Error("Item not bookmarked.");
       }
 
-      user.bookmarked = user.bookmarked.filter((id) => id !== itemId);
+      user.bookmarked = user.bookmarked.filter(
+        (id) => id.toString() !== itemId
+      );
+      console.log({ book: user.bookmarked });
       await user.save();
       return item;
     } catch (error) {
