@@ -17,14 +17,25 @@ class ItemController {
         // type,
         isFound,
         poster,
+        search,
       } = req.query;
       const { page, limit } = req.query;
 
       let query: any = {};
 
       if (category) query.category = category;
-      if (location) query.location = location;
+      if (location)
+        query.location = {
+          $regex: location,
+          $options: "i", // "i" for case-insensitive matching
+        };
       // if (type) query.type = type;
+      if (search)
+        query.searchText = {
+          $regex: search?.toString()?.toLowerCase(),
+          $options: "i", // "i" for case-insensitive matching
+        };
+
       if (isFound)
         query.isFound = isFound ? isFound === BooleanString.TRUE : undefined;
       if (poster)
@@ -137,6 +148,30 @@ class ItemController {
     }
   }
 
+  async getItemLocations(req: Request, res: Response) {
+    try {
+      const locations = await ItemService.getItemLocations();
+
+      if (locations) {
+        return sendResponse({
+          res,
+          status: StatusCodes.OK,
+          message: "Locations retrieved!",
+          data: locations,
+          success: true,
+        });
+      }
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "Locations not retrieved!",
+        error: error,
+        success: false,
+      });
+    }
+  }
+
   async searchItems(req: Request, res: Response) {
     try {
       const { query, page, limit } = req.query;
@@ -153,7 +188,7 @@ class ItemController {
       const pageAsNumber = parseInt((page ?? "0") as string);
       const limitAsNumber = parseInt((limit ?? "10") as string);
 
-      const result = await ItemService.searchItems(
+      const result = await ItemService.searchItems2(
         query as string,
         pageAsNumber,
         limitAsNumber

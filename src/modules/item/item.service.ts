@@ -187,31 +187,42 @@ class ItemService {
   }
 
   //   Another way to implement searchItems() is to use a regular expression (regex) to perform a case-insensitive search on the name and description fields:
-  //   async searchItems(searchQuery: string, page: number, limit: number) {
-  //     try {
-  //       const skipCount = page * limit;
-  //       const regex = new RegExp(searchQuery, "i"); // Case-insensitive search
+  async searchItems2(searchQuery: string, page: number, limit: number) {
+    try {
+      const skipCount = page * limit;
+      const regex = new RegExp(searchQuery, "i"); // Case-insensitive search
 
-  //       const [items, totalItemsCount] = await Promise.all([
-  //         ItemModel.find({
-  //           $or: [{ name: regex }, { description: regex }],
-  //         })
-  //           .sort({ createdAt: -1 })
-  //           .skip(skipCount)
-  //           .limit(limit),
-  //         ItemModel.countDocuments({
-  //           $or: [{ name: regex }, { description: regex }],
-  //         }),
-  //       ]);
+      const [items, totalItemsCount] = await Promise.all([
+        ItemModel.find({
+          $or: [
+            {
+              $text: {
+                $search: searchQuery,
+              },
+            },
+            {
+              searchText: {
+                $regex: regex, // Use the regular expression pattern for wildcard search
+              },
+            },
+          ],
+        })
+          .sort({ createdAt: -1 })
+          .skip(skipCount)
+          .limit(limit),
+        ItemModel.countDocuments({
+          $or: [{ name: regex }, { description: regex }],
+        }),
+      ]);
 
-  //       return {
-  //         items,
-  //         totalItemsCount,
-  //       };
-  //     } catch (error) {
-  //       throw new Error("Failed to search items.");
-  //     }
-  //   }
+      return {
+        items,
+        totalItemsCount,
+      };
+    } catch (error) {
+      throw new Error("Failed to search items.");
+    }
+  }
 
   async addItem(data: any, userId: string) {
     try {
@@ -232,6 +243,7 @@ class ItemService {
 
       // Concatenate relevant fields' values for the searchText field
       const searchText = [
+        name,
         description,
         category,
         location,
@@ -273,6 +285,11 @@ class ItemService {
     } catch (error) {
       throw new Error("Failed to retrieve item.");
     }
+  }
+
+  async getItemLocations() {
+    const locations = await ItemModel.distinct("location").exec();
+    return locations;
   }
 
   async getItemWithBookmarkStatus(itemId: string, currentUser: string) {

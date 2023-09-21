@@ -16,6 +16,7 @@ ItemRouter.post(
   ItemController.addItem
 );
 ItemRouter.get("/search", isAuth, ItemController.searchItems);
+ItemRouter.get("/locations", isAuth, ItemController.getItemLocations);
 ItemRouter.get("/me", isAuth, ItemController.getItems);
 
 ItemRouter.get("/:id", isAuth, ItemController.getItem);
