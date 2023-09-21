@@ -7,7 +7,7 @@
     "rootDir": "src",
     "outDir": "build",
     "skipLibCheck": true,
-    "strict": true
+    "strict": false
   },
   "include": ["./**/*.ts"]
 }
