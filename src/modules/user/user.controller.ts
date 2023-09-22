@@ -39,17 +39,19 @@ class UserController {
     }
   }
   updateUser = async (req: Request, res: Response) => {
-    const { email, phone } = req.body;
-
-    const profileImg: string = req.file?.path ?? "";
-
-    /* Normalize the image path using path module. Without this, Windows will make use of
-  backward slashes which is not readable by web systems and other OSs */
-    const normalizedProfileImagePath = profileImg.split(path.sep).join("/");
+    const { name, phone } = req.body;
+    let photoBuffer: Buffer | undefined = undefined;
+    if (req.file) {
+      photoBuffer = req.file?.buffer;
+    }
 
     try {
       const userId = req.userId;
-      const user = await User.findById(userId);
+      const user = await UserService.updateUserDetails(userId, {
+        name,
+        phone,
+        photoBuffer,
+      });
       if (!user) {
         return sendResponse({
           res,
@@ -58,10 +60,7 @@ class UserController {
           message: "User not found",
         });
       }
-      user.email = email;
-      user.phone = phone;
-      user.photo = normalizedProfileImagePath;
-      await user.save();
+
       return sendResponse({
         res,
         status: StatusCodes.OK,

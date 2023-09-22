@@ -1,7 +1,8 @@
 import { UserModel } from ".";
+import { uploadImageToCloudinary } from "../../utils/cloudinary";
 import { ItemModel } from "../item";
 import { IItem } from "../item/item.model";
-import User from "./user.model";
+import User, { IUser } from "./user.model";
 
 class UserService {
   findUserByEmailOrPhone = async ({
@@ -160,6 +161,46 @@ class UserService {
       return user?.deviceToken ?? "";
     } catch (error) {
       throw new Error("Failed to update online status.");
+    }
+  }
+
+  async uploadProfilePic(photo: Buffer) {
+    const imgUrl = await uploadImageToCloudinary(photo);
+    return imgUrl;
+  }
+
+  async updateUserDetails(
+    userId: string,
+    updatedFields: Partial<IUser> & {
+      photoBuffer?: Buffer;
+    }
+  ): Promise<IUser | null> {
+    try {
+      const user = await User.findById(userId);
+
+      // { $set: updatedFields },
+
+      if (!user) {
+        throw new Error("User not found.");
+      }
+
+      if (updatedFields?.photoBuffer) {
+        const imgUrl = await this.uploadProfilePic(updatedFields?.photoBuffer);
+
+        // You can update the 'updatedFields' object to include the imgUrl or any other relevant information.
+        user.photo = imgUrl;
+      }
+      if (updatedFields.phone) {
+        user.phone = updatedFields.phone.trim();
+      }
+
+      if (updatedFields.name) {
+        user.name = updatedFields.name.trim();
+      }
+
+      return user;
+    } catch (error) {
+      throw new Error("Failed to update user details.");
     }
   }
 }
