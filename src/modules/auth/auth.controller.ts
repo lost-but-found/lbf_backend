@@ -173,7 +173,7 @@ const refreshToken = async (req: Request, res: Response) => {
 };
 
 const register = async (req: Request, res: Response) => {
-  const { name, email, password, phone } = req.body;
+  const { name, email, password, phone, deviceToken } = req.body;
   // const photo = req.file;
   // check for duplicate email or phone number in the db
   const duplicateEmail = await UserModel.findOne({ email }).exec();
@@ -211,6 +211,7 @@ const register = async (req: Request, res: Response) => {
       email,
       password: hashedPwd,
       phone,
+      deviceToken,
       // photo: "normalizedProfileImagePath",
     });
     console.log(result);
