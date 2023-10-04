@@ -49,16 +49,23 @@ class ReportController {
 
   getReports = async (req: Request, res: Response) => {
     try {
-      const page = Number(req.query.page) || 1;
-      const limit = Number(req.query.limit) || 10;
-      const reports = await ReportService.getReports(page - 1, limit);
-
+      const pageAsNumber = parseInt((req.query.page ?? "1") as string);
+      const limitAsNumber = parseInt((req.query.limit ?? "10") as string);
+      const result = await ReportService.getReports(
+        pageAsNumber - 1,
+        limitAsNumber
+      );
       return sendResponse({
         res,
-        status: 200,
+        status: StatusCodes.OK,
         message: "Reports fetched successfully.",
         success: true,
-        data: reports,
+        data: {
+          reports: result.reports,
+          page: pageAsNumber,
+          limit: limitAsNumber,
+          total: result.total,
+        },
       });
     } catch (error) {
       return sendResponse({
