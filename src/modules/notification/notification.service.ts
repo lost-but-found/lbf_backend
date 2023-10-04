@@ -1,4 +1,4 @@
-import FCM from "../../utils/fcm";
+// import FCM from "../../utils/fcm";
 import { NotificationModel, INotification } from "./notification.model";
 import { Types } from "mongoose";
 
@@ -14,13 +14,19 @@ class NotificationService {
     }
   }
 
-  async markNotificationAsRead(
-    notificationId: Types.ObjectId
-  ): Promise<INotification | null> {
+  async markNotificationAsRead({
+    userId,
+    notificationId,
+    isRead,
+  }: {
+    userId: Types.ObjectId;
+    notificationId: Types.ObjectId;
+    isRead: boolean;
+  }): Promise<INotification | null> {
     try {
-      const updatedNotification = await NotificationModel.findByIdAndUpdate(
-        notificationId,
-        { isRead: true },
+      const updatedNotification = await NotificationModel.findOneAndUpdate(
+        { _id: notificationId, user: userId },
+        { isRead },
         { new: true }
       );
       return updatedNotification;
@@ -40,12 +46,27 @@ class NotificationService {
     }
   }
 
+  async getNotification(
+    userId: Types.ObjectId,
+    notificationId: Types.ObjectId
+  ): Promise<INotification | null> {
+    try {
+      const notification = await NotificationModel.findOne({
+        user: userId,
+        _id: notificationId,
+      });
+      return notification;
+    } catch (error) {
+      throw new Error("Failed to fetch notifications for user.");
+    }
+  }
+
   async sendPushNotification(
     title: string,
     body: string,
     userDeviceTokens: string[]
   ) {
-    FCM.sendPushNotificationToUser(userDeviceTokens, title, body);
+    // FCM.sendPushNotificationToUser(userDeviceTokens, title, body);
   }
 
   async sendGlobalPushNotification(
@@ -53,7 +74,7 @@ class NotificationService {
     body: string,
     userDeviceTokens: string[]
   ) {
-    FCM.sendPushNotificationToGeneral(title, body);
+    // FCM.sendPushNotificationToGeneral(title, body);
   }
 }
 

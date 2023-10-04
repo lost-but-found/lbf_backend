@@ -11,6 +11,7 @@ import { ChatMessageRouter } from "./modules/chatMessage";
 import { ChatRoomRouter } from "./modules/chatRoom";
 import { CallRouter } from "./modules/call";
 import { ReportRouter } from "./modules/report";
+import { NotificationRouter } from "./modules/notification";
 
 const router: Router = Router();
 
@@ -22,6 +23,7 @@ router.use("/chat-messages", ChatMessageRouter);
 router.use("/chats", ChatRoomRouter);
 router.use("/calls", CallRouter);
 router.use("/reports", ReportRouter);
+router.use("/notifications", NotificationRouter);
 
 const routes = (app: Application) => {
   app.use("/api/v1", router);
