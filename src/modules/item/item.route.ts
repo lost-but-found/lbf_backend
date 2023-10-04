@@ -20,5 +20,7 @@ ItemRouter.get("/locations", isAuth, ItemController.getItemLocations);
 ItemRouter.get("/me", isAuth, ItemController.getItems);
 
 ItemRouter.get("/:id", isAuth, ItemController.getItem);
+ItemRouter.post("/:id/claim", isAuth, ItemController.claimItem);
+ItemRouter.post("/:id/unclaim", isAuth, ItemController.claimItem);
 
 export default ItemRouter;

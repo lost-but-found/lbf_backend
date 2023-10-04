@@ -221,7 +221,17 @@ class ItemController {
       const userId = req.userId;
       const itemId = req.params.id;
 
-      await ItemService.claimItem(userId, itemId);
+      const claimStatus = await ItemService.claimItem(userId, itemId);
+
+      if (claimStatus) {
+        return sendResponse({
+          res,
+          status: claimStatus.status,
+          message: claimStatus.message,
+
+          success: false,
+        });
+      }
 
       return sendResponse({
         res,
@@ -232,8 +242,8 @@ class ItemController {
       return sendResponse({
         res,
         status: StatusCodes.INTERNAL_SERVER_ERROR,
-        message: "Failed to claim item.",
-        error: error.message,
+        message: error ?? "Failed to claim item.",
+        error: error,
         success: false,
       });
     }

@@ -4,6 +4,7 @@ import { UserModel, UserService } from "../user";
 import { uploadImageToCloudinary } from "../../utils/cloudinary";
 import { EventEmitter, EventEmitterEvents } from "../../events";
 import { PipelineStage } from "mongoose";
+import { StatusCodes } from "http-status-codes";
 
 class ItemService {
   async getItems2(query: any, page: number, limit: number) {
@@ -324,12 +325,18 @@ class ItemService {
       const item = await ItemModel.findById(itemId);
 
       if (!user || !item) {
-        throw new Error("User or item not found.");
+        return {
+          message: "User or item not found.",
+          status: StatusCodes.NOT_FOUND,
+        };
       }
 
       // Check if the item is already claimed by the user
       if (item.claimedBy.includes(userId)) {
-        throw new Error("Item is already claimed by the user.");
+        return {
+          message: "Item is already claimed by the user.",
+          status: StatusCodes.CONFLICT,
+        };
       }
 
       // Mark the item as claimed by the user
