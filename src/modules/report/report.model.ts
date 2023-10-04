@@ -1,18 +1,12 @@
 import { Schema, Document, model, Types } from "mongoose";
 import { IUser } from "../user";
+import { ReportReason } from "./report.type";
 
 interface IReport extends Document {
   user: Types.ObjectId | IUser;
   reason: ReportReason;
   message?: string;
   createdAt: Date;
-}
-
-enum ReportReason {
-  HARASSMENT = "harassment",
-  SPAM = "spam",
-  INAPPROPRIATE_CONTENT = "inappropriate_content",
-  OTHER = "other",
 }
 
 const reportSchema = new Schema<IReport>({
