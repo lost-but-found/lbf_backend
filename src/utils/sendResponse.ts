@@ -31,6 +31,7 @@ export function sendResponse<T, U extends boolean>({
   };
 
   res
-    .status(status ?? (success ? StatusCodes.OK : StatusCodes.BAD_REQUEST))
+    .status(status ?? success ? StatusCodes.OK : StatusCodes.BAD_REQUEST)
+    // .status(status ?? (success ? StatusCodes.OK : StatusCodes.BAD_REQUEST))
     .json(responseBody);
 }
