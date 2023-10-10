@@ -198,6 +198,7 @@ class UserService {
         user.name = updatedFields.name.trim();
       }
 
+      await user.save();
       return user;
     } catch (error) {
       throw new Error("Failed to update user details.");
