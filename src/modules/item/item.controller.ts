@@ -5,6 +5,7 @@ import ItemService from "./item.service";
 import buildDateQuery from "../../utils/buildDateQuery";
 import mongoose from "mongoose";
 import { BooleanString } from "./item.type";
+import { ItemCommentService } from "../itemComment";
 
 class ItemController {
   async getItems(req: Request, res: Response) {
@@ -271,6 +272,208 @@ class ItemController {
         status: StatusCodes.INTERNAL_SERVER_ERROR,
         message: "Failed to retrieve claimed items.",
         error: error.message,
+        success: false,
+      });
+    }
+  }
+
+  async likeItem(req: Request, res: Response) {
+    try {
+      const userId = req.userId;
+      const itemId = req.params.id;
+
+      const likeStatus = await ItemService.likeItem(userId, itemId);
+
+      if (likeStatus) {
+        return sendResponse({
+          res,
+          status: StatusCodes.CREATED,
+
+          message: "Item liked successfully.",
+          success: true,
+        });
+        // } else {
+        //   return sendResponse({
+        //     res,
+        //               status: StatusCodes.CREATED,
+
+        //     message: "User has already liked the item.",
+        //     success: false,
+        //   });
+      } else {
+        return sendResponse({
+          res,
+          status: StatusCodes.BAD_REQUEST,
+
+          message: "Failed to like item.",
+          success: false,
+        });
+      }
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: error.message || "Failed to like item.",
+        success: false,
+      });
+    }
+  }
+
+  async getLikedItems(req: Request, res: Response) {
+    try {
+      const userId = req.userId;
+      const likedItems = await ItemService.getLikedItems(userId);
+
+      return sendResponse({
+        res,
+        status: StatusCodes.OK,
+        message: "Liked items retrieved successfully.",
+        data: likedItems,
+        success: true,
+      });
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: error.message || "Failed to retrieve liked items.",
+        success: false,
+      });
+    }
+  }
+
+  async unlikeItem(req: Request, res: Response) {
+    try {
+      const userId = req.userId;
+      const itemId = req.params.id;
+
+      const unlikeStatus = await ItemService.unlikeItem(userId, itemId);
+
+      if (unlikeStatus) {
+        return sendResponse({
+          res,
+          status: StatusCodes.CREATED,
+          message: "Item unliked successfully.",
+          success: true,
+        });
+      } else {
+        return sendResponse({
+          res,
+          status: StatusCodes.BAD_REQUEST,
+          message: "Failed to unlike item.",
+          success: false,
+        });
+      }
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: error.message || "Failed to unlike item.",
+        success: false,
+      });
+    }
+  }
+
+  async getItemComments(req: Request, res: Response) {
+    try {
+      const itemId = req.params.id;
+
+      const comments = await ItemCommentService.getPaginatedComments(
+        itemId,
+        1,
+        10
+      );
+
+      if (comments) {
+        // if (comments.status === StatusCodes.OK) {
+        return sendResponse({
+          res,
+          status: StatusCodes.OK,
+          data: comments,
+          message: "Item comments fetched successfully.",
+          success: true,
+        });
+      } else {
+        return sendResponse({
+          res,
+          status: StatusCodes.BAD_REQUEST,
+          message: "Failed to fetch item comments.",
+          success: false,
+        });
+      }
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: error.message || "Failed to fetch item comments.",
+        success: false,
+      });
+    }
+  }
+
+  async createItemComment(req: Request, res: Response) {
+    try {
+      const itemId = req.params.id;
+      const userId = req.userId; // Assuming you have user information in the request
+
+      // Extract the comment data from the request body
+      const { text } = req.body;
+
+      // Create the comment using the ItemCommentService
+      const comment = await ItemCommentService.createComment(
+        itemId,
+        userId,
+        text
+      );
+
+      return sendResponse({
+        res,
+        status: StatusCodes.CREATED,
+        message: "Item comment created successfully.",
+        data: comment, // Include the created comment in the response data
+        success: true,
+      });
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: error.message || "Failed to create item comment.",
+        success: false,
+      });
+    }
+  }
+
+  async deleteItemComment(req: Request, res: Response) {
+    try {
+      const commentId = req.params.commentId; // Assuming you pass the comment ID in the request
+      const userId = req.userId; // Assuming you have user information in the request
+
+      // Delete the comment using the ItemCommentService
+      const deleteResult = await ItemCommentService.deleteComment(
+        commentId,
+        userId
+      );
+
+      if (deleteResult) {
+        return sendResponse({
+          res,
+          status: StatusCodes.OK,
+          message: "Item comment deleted successfully.",
+          success: true,
+        });
+      } else {
+        return sendResponse({
+          res,
+          status: StatusCodes.NOT_FOUND,
+          message:
+            "Item comment not found or you don't have permission to delete it.",
+          success: false,
+        });
+      }
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: error.message || "Failed to delete item comment.",
         success: false,
       });
     }

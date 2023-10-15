@@ -5,6 +5,8 @@ import { uploadImageToCloudinary } from "../../utils/cloudinary";
 import { EventEmitter, EventEmitterEvents } from "../../events";
 import { PipelineStage } from "mongoose";
 import { StatusCodes } from "http-status-codes";
+import { ItemLikeService } from "../itemLike";
+import itemLikeService from "../itemLike/itemLike.service";
 
 class ItemService {
   async getItems2(query: any, page: number, limit: number) {
@@ -32,64 +34,7 @@ class ItemService {
       console.log({ page, limit });
       const skipCount = Math.max(page - 1, 0) * limit;
 
-      // Aggregate to fetch items and user's bookmarked items
-      const aggregationPipeline2: PipelineStage[] = [
-        {
-          $match: query, // Apply your query conditions
-        },
-        {
-          $sort: { createdAt: -1 },
-        },
-        {
-          $skip: skipCount,
-        },
-        {
-          $limit: limit,
-        },
-        {
-          $addFields: {
-            // Convert 'currentUserId' to ObjectId type
-            currentUserIdObjectId: { $toObjectId: userId },
-          },
-        },
-        {
-          $lookup: {
-            from: "users", // Replace with the actual name of the User collection
-            localField: "currentUserIdObjectId", // Use the converted currentUserIdObjectId
-            foreignField: "_id",
-            as: "currentUserDetails",
-          },
-        },
-        {
-          $addFields: {
-            // Use $arrayElemAt to extract the first (and only) element of the 'currentUserDetails' array
-            currentUserDetails: { $arrayElemAt: ["$currentUserDetails", 0] },
-          },
-        },
-        {
-          $project: {
-            _id: 1, // Include other item fields as needed
-            name: 1,
-            description: 1,
-            category: 1,
-            // type: 1,
-            isFound: 1,
-            date: 1,
-            time: 1,
-            location: 1,
-            additional_description: 1,
-            createdAt: 1,
-            poster: 1,
-            claimedBy: 1,
-            // Include only the 'bookmarked' field from 'currentUserDetails'
-            isBookmarked: {
-              $in: ["$_id", "$currentUserDetails.bookmarked"],
-            },
-          },
-        },
-      ];
-
-      const aggregationPipeline: PipelineStage[] = [
+      const aggregationPipeline_old: PipelineStage[] = [
         {
           $match: query,
         },
@@ -141,6 +86,80 @@ class ItemService {
             poster: 1,
             claimedBy: 1,
             isBookmarked: { $in: ["$_id", "$currentUserDetails.bookmarked"] },
+          },
+        },
+      ];
+
+      const aggregationPipeline: PipelineStage[] = [
+        {
+          $match: query,
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $skip: skipCount,
+        },
+        {
+          $limit: limit,
+        },
+        {
+          $lookup: {
+            from: "users",
+            let: { userId: { $toObjectId: userId } },
+            pipeline: [
+              {
+                $match: { $expr: { $eq: ["$_id", "$$userId"] } },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  bookmarked: 1,
+                },
+              },
+            ],
+            as: "currentUserDetails",
+          },
+        },
+        {
+          $set: {
+            currentUserDetails: { $arrayElemAt: ["$currentUserDetails", 0] },
+          },
+        },
+        {
+          $lookup: {
+            from: "likes", // Assuming your likes collection is named "likes"
+            localField: "_id", // Assuming item's ID field is "_id"
+            foreignField: "item", // Assuming likes are associated with items
+            as: "likes",
+          },
+        },
+        {
+          $lookup: {
+            from: "comments", // Replace with your comments collection name
+            localField: "_id",
+            foreignField: "item", // Assuming comments are associated with items
+            as: "comments",
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            category: 1,
+            isFound: 1,
+            date: 1,
+            time: 1,
+            images: 1,
+            location: 1,
+            additional_description: 1,
+            createdAt: 1,
+            poster: 1,
+            claimedBy: 1,
+            isBookmarked: { $in: ["$_id", "$currentUserDetails.bookmarked"] },
+            likeCount: { $size: "$likes" }, // Count the likes
+            commentCount: { $size: "$comments" }, // Count the comments
           },
         },
       ];
@@ -381,6 +400,62 @@ class ItemService {
       return claimedItems;
     } catch (error) {
       throw new Error("Failed to retrieve claimed items.");
+    }
+  }
+
+  async likeItem(userId: string, itemId: string) {
+    try {
+      const user = await UserService.getUser(userId);
+      const item = await ItemModel.findById(itemId);
+
+      if (!user || !item) {
+        return {
+          message: "User or item not found.",
+          status: StatusCodes.NOT_FOUND,
+        };
+      }
+
+      // Check if the user has already liked the item
+      const existingLike = await ItemLikeService.likeItem(userId, itemId);
+
+      if (existingLike) {
+        return {
+          message: "User has already liked the item.",
+          status: StatusCodes.CONFLICT,
+        };
+      }
+
+      return {
+        message: "Item liked successfully.",
+        status: StatusCodes.CREATED,
+      };
+    } catch (error) {
+      throw new Error("Failed to like item.");
+    }
+  }
+
+  async getLikedItems(userId: string) {
+    try {
+      // Find likes associated with the user
+      const userLikes = await ItemLikeService.getLikedItems(userId);
+      return userLikes;
+    } catch (error) {
+      throw new Error("Failed to fetch liked items.");
+    }
+  }
+
+  async unlikeItem(userId: string, itemId: string) {
+    try {
+      // Find the like associated with the user and item
+      const like = await itemLikeService.unlikeItem(userId, itemId);
+
+      if (!like) {
+        throw new Error("Item not found");
+      }
+
+      return "Item unliked successfully.";
+    } catch (error) {
+      throw new Error("Failed to unlike item.");
     }
   }
 }
