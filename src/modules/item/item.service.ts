@@ -113,7 +113,7 @@ class ItemService {
               },
               {
                 $project: {
-                  _id: 0,
+                  _id: 1,
                   bookmarked: 1,
                 },
               },
@@ -131,7 +131,7 @@ class ItemService {
             from: "likes", // Assuming your likes collection is named "likes"
             localField: "_id", // Assuming item's ID field is "_id"
             foreignField: "item", // Assuming likes are associated with items
-            as: "likes",
+            as: "userLikes",
           },
         },
         {
@@ -158,7 +158,16 @@ class ItemService {
             poster: 1,
             claimedBy: 1,
             isBookmarked: { $in: ["$_id", "$currentUserDetails.bookmarked"] },
-            likeCount: { $size: "$likes" }, // Count the likes
+            likeCount: { $size: "$userLikes" }, // Count the likes
+            isLiked: {
+              $cond: {
+                if: {
+                  $in: ["$currentUserDetails._id", "$userLikes.user"],
+                },
+                then: true,
+                else: false,
+              },
+            },
             commentCount: { $size: "$comments" }, // Count the comments
           },
         },
