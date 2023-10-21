@@ -49,7 +49,7 @@ const login = async (req: Request, res: Response) => {
       httpOnly: true,
       sameSite: "none",
       //   secure: true,
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000 * 10,
     });
 
     const { password, ...restUserProps } = foundUser.toObject();
