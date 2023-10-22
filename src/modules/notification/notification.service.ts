@@ -1,4 +1,4 @@
-// import FCM from "../../utils/fcm";
+import FCM from "../../utils/fcm";
 import { NotificationModel, INotification } from "./notification.model";
 import { Types } from "mongoose";
 
@@ -64,9 +64,9 @@ class NotificationService {
   async sendPushNotification(
     title: string,
     body: string,
-    userDeviceTokens: string[]
+    userDeviceToken: string
   ) {
-    // FCM.sendPushNotificationToUser(userDeviceTokens, title, body);
+    FCM.sendPushNotificationToUser(userDeviceToken, title, body);
   }
 
   async sendGlobalPushNotification(

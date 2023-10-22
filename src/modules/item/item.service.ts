@@ -34,62 +34,6 @@ class ItemService {
       console.log({ page, limit });
       const skipCount = Math.max(page - 1, 0) * limit;
 
-      const aggregationPipeline_old: PipelineStage[] = [
-        {
-          $match: query,
-        },
-        {
-          $sort: { createdAt: -1 },
-        },
-        {
-          $skip: skipCount,
-        },
-        {
-          $limit: limit,
-        },
-        {
-          $lookup: {
-            from: "users",
-            let: { userId: { $toObjectId: userId } },
-            pipeline: [
-              {
-                $match: { $expr: { $eq: ["$_id", "$$userId"] } },
-              },
-              {
-                $project: {
-                  _id: 0,
-                  bookmarked: 1,
-                },
-              },
-            ],
-            as: "currentUserDetails",
-          },
-        },
-        {
-          $set: {
-            currentUserDetails: { $arrayElemAt: ["$currentUserDetails", 0] },
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            name: 1,
-            description: 1,
-            category: 1,
-            isFound: 1,
-            date: 1,
-            time: 1,
-            images: 1,
-            location: 1,
-            additional_description: 1,
-            createdAt: 1,
-            poster: 1,
-            claimedBy: 1,
-            isBookmarked: { $in: ["$_id", "$currentUserDetails.bookmarked"] },
-          },
-        },
-      ];
-
       const aggregationPipeline: PipelineStage[] = [
         {
           $match: query,
@@ -172,7 +116,7 @@ class ItemService {
           },
         },
       ];
-
+      // console.log({ aggregationPipeline });
       const items = await ItemModel.aggregate(aggregationPipeline);
 
       const totalItemsCount = items.length;
@@ -370,8 +314,9 @@ class ItemService {
       // Mark the item as claimed by the user
       item.claimedBy.push(userId);
       await item.save();
-      EventEmitter.emit(EventEmitterEvents.ItemClaimed, {
-        userId: item.poster,
+      EventEmitter.emit(EventEmitterEvents.ITEM_CLAIMED, {
+        itemId,
+        userId: item.poster?.toString(),
       });
     } catch (error) {
       throw new Error("Failed to claim item.");
@@ -433,6 +378,11 @@ class ItemService {
           status: StatusCodes.CONFLICT,
         };
       }
+
+      EventEmitter.emit(EventEmitterEvents.ITEM_LIKED, {
+        itemId,
+        userId: item.poster?.toString(),
+      });
 
       return {
         message: "Item liked successfully.",

@@ -1,5 +1,6 @@
 import ItemController from "./item.controller";
 import ItemModel from "./item.model";
 import ItemRouter from "./item.route";
-
-export { ItemRouter, ItemController, ItemModel };
+import ItemService from "./item.service";
+export * from "./item.model";
+export { ItemRouter, ItemController, ItemService, ItemModel };

@@ -1,5 +1,7 @@
 import { Types } from "mongoose";
 import { CommentModel } from "./itemComment.model";
+import { EventEmitter, EventEmitterEvents } from "../../events";
+import { ItemService } from "../item";
 
 class ItemCommentService {
   async getPaginatedComments(itemId: string, page: number, limit: number) {
@@ -15,6 +17,10 @@ class ItemCommentService {
 
   async createComment(itemId: string, userId: string, text: string) {
     try {
+      const item = await ItemService.getItem(itemId);
+      if (!item) {
+        throw new Error("No such item found");
+      }
       const comment = new CommentModel({
         item: itemId,
         user: userId,
@@ -23,6 +29,12 @@ class ItemCommentService {
 
       await comment.save();
 
+      EventEmitter.emit(EventEmitterEvents.ITEM_COMMENTED_ON, {
+        itemId,
+        userId: item?.poster?.toString() ?? "",
+        comment: text,
+        commenterId: userId,
+      });
       return comment;
     } catch (error) {
       throw new Error("Failed to create comment.");

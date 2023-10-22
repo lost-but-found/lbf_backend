@@ -1,4 +1,8 @@
 import { EventEmitterEvents } from "./events.interface";
 import EventEmitter from "./base";
+import setupItemEvents from "./item.events";
 
-export { EventEmitter, EventEmitterEvents };
+function setupEvents() {
+  setupItemEvents();
+}
+export { setupEvents, EventEmitter, EventEmitterEvents };

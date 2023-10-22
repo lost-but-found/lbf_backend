@@ -14,6 +14,7 @@ import routes from "./routes";
 import { isWhitelisted } from "./modules/auth/auth.middleware";
 import { PORT, SENDGRID_API_KEY } from "./config";
 import socketEvents from "./sockets";
+import { setupEvents } from "./events";
 
 /* Sendgrid implementation */
 sgMail.setApiKey(SENDGRID_API_KEY);
@@ -46,6 +47,7 @@ const io = new Server(httpServer, {
 
 socketEvents(io);
 routes(app);
+setupEvents();
 
 connectToDatabase(() => {
   console.log(`Running on ${process.env.NODE_ENV} mode`);
