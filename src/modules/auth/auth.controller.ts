@@ -49,7 +49,7 @@ const login = async (req: Request, res: Response) => {
       httpOnly: true,
       sameSite: "none",
       //   secure: true,
-      maxAge: 24 * 60 * 60 * 1000 * 10,
+      maxAge: 24 * 60 * 60 * 1000 * 120,
     });
 
     const { password, ...restUserProps } = foundUser.toObject();
@@ -159,7 +159,7 @@ const refreshToken = async (req: Request, res: Response) => {
           email: decoded.email,
         },
         JWT_SECRET_KEY,
-        { expiresIn: "300s" }
+        { expiresIn: "120d" }
       );
       sendResponse({
         res,

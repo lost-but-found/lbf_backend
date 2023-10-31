@@ -93,14 +93,14 @@ export function generateJWTToken(user: { _id: string; email: string }) {
       user,
     },
     JWT_SECRET_KEY,
-    { expiresIn: "10d" }
+    { expiresIn: "120d" }
   );
   const refreshToken = jwt.sign(
     {
       user,
     },
     JWT_SECRET_KEY,
-    { expiresIn: "21d" }
+    { expiresIn: "210d" }
   );
 
   return {
