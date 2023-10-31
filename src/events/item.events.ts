@@ -4,6 +4,7 @@ import eventEmitter from "./base";
 import { EventEmitterEvents } from "./events.interface";
 
 export default function setupItemEvents() {
+  console.log("Setup item events");
   eventEmitter.on(EventEmitterEvents.ITEM_CREATED, async (eventData) => {
     const { userId } = eventData;
     if (!userId) return;
@@ -23,6 +24,7 @@ export default function setupItemEvents() {
 
   eventEmitter.on(EventEmitterEvents.ITEM_LIKED, async (eventData) => {
     const { userId } = eventData;
+    console.log("like notification");
     if (!userId) return;
     const userDeviceToken = await UserService.getUserDeviceTokens(userId ?? "");
     const title = "Your item just received a like!";

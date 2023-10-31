@@ -369,6 +369,10 @@ class ItemService {
         };
       }
 
+      EventEmitter.emit(EventEmitterEvents.ITEM_LIKED, {
+        itemId,
+        userId: item.poster?.toString(),
+      });
       // Check if the user has already liked the item
       const existingLike = await ItemLikeService.likeItem(userId, itemId);
 
@@ -378,11 +382,7 @@ class ItemService {
           status: StatusCodes.CONFLICT,
         };
       }
-
-      EventEmitter.emit(EventEmitterEvents.ITEM_LIKED, {
-        itemId,
-        userId: item.poster?.toString(),
-      });
+      console.log("time to emit");
 
       return {
         message: "Item liked successfully.",
