@@ -1,6 +1,5 @@
-import { isValidObjectId } from "mongoose";
-import { BooleanString, ItemTypeEnum } from "./../item.type";
-import { any, nativeEnum, array, object, string, TypeOf } from "zod";
+import { BooleanString } from "./../item.type";
+import { any, nativeEnum, array, object, string, TypeOf, boolean } from "zod";
 
 export const createItemSchema = object({
   body: object({
@@ -32,4 +31,12 @@ export const createItemSchema = object({
   files: array(any()).length(4, "Must be four images"),
 });
 
-export type RegisterUserInput = TypeOf<typeof createItemSchema>;
+export const updateItemStatusSchema = object({
+  body: object({
+    isClosed: boolean({
+      required_error: "Text is required",
+    }),
+  }),
+});
+
+export type CreateItemInput = TypeOf<typeof createItemSchema>;

@@ -17,6 +17,7 @@ class ItemController {
         date_to,
         // type,
         isFound,
+        isClosed,
         poster,
         search,
       } = req.query;
@@ -39,6 +40,8 @@ class ItemController {
 
       if (isFound)
         query.isFound = isFound ? isFound === BooleanString.TRUE : undefined;
+      if (isClosed)
+        query.isClosed = isClosed ? isClosed === BooleanString.TRUE : undefined;
       if (poster)
         query.poster = new mongoose.Types.ObjectId(poster?.toString());
       const dateQuery = buildDateQuery({
@@ -272,6 +275,45 @@ class ItemController {
         status: StatusCodes.INTERNAL_SERVER_ERROR,
         message: "Failed to retrieve claimed items.",
         error: error.message,
+        success: false,
+      });
+    }
+  }
+
+  async updateItemStatus(req: Request, res: Response) {
+    try {
+      const userId = req.userId;
+      const itemId = req.params.id;
+      const { isClosed } = req.body;
+
+      const itemStatus = await ItemService.updateItemStatus(
+        userId,
+        itemId,
+        isClosed
+      );
+
+      if (itemStatus) {
+        return sendResponse({
+          res,
+          status: StatusCodes.CREATED,
+
+          message: itemStatus?.message,
+          success: true,
+        });
+      } else {
+        return sendResponse({
+          res,
+          status: StatusCodes.BAD_REQUEST,
+
+          message: "Failed to change item status.",
+          success: false,
+        });
+      }
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: error.message || "Failed to change item status.",
         success: false,
       });
     }

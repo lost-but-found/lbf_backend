@@ -357,6 +357,35 @@ class ItemService {
     }
   }
 
+  async updateItemStatus(userId: string, itemId: string, isClosed: boolean) {
+    try {
+      const user = await UserService.getUser(userId);
+      const item = await ItemModel.findOne({
+        _id: itemId,
+        poster: userId,
+      });
+
+      if (!user || !item) {
+        return {
+          message: "User or item not found.",
+          status: StatusCodes.NOT_FOUND,
+        };
+      }
+
+      item.isClosed = isClosed;
+      await item.save();
+
+      return {
+        message: `Item status changed to ${
+          isClosed ? "closed" : "open"
+        } successfully.`,
+        status: StatusCodes.CREATED,
+      };
+    } catch (error) {
+      throw new Error("Failed to like item.");
+    }
+  }
+
   async likeItem(userId: string, itemId: string) {
     try {
       const user = await UserService.getUser(userId);

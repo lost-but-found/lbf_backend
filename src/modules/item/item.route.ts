@@ -1,7 +1,10 @@
 import express, { Router } from "express";
 import ItemController from "./item.controller";
 import validateRequest from "../../middleware/validateRequest";
-import { createItemSchema } from "./schemas/create-item.schema";
+import {
+  createItemSchema,
+  updateItemStatusSchema,
+} from "./schemas/create-item.schema";
 import upload from "../../middleware/upload";
 import { isAuth } from "../auth/auth.middleware";
 import { createItemCommentSchema } from "../itemComment/schemas/create-item-comment.schema";
@@ -38,5 +41,11 @@ ItemRouter.post("/:id/claim", isAuth, ItemController.claimItem);
 ItemRouter.post("/:id/unclaim", isAuth, ItemController.claimItem);
 ItemRouter.post("/:id/like", isAuth, ItemController.likeItem);
 ItemRouter.post("/:id/unlike", isAuth, ItemController.unlikeItem);
+ItemRouter.post(
+  "/:id/status",
+  isAuth,
+  validateRequest(updateItemStatusSchema),
+  ItemController.updateItemStatus
+);
 
 export default ItemRouter;

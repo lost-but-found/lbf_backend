@@ -6,6 +6,7 @@ export interface IItem extends Document {
   description?: string;
   type: ItemTypeEnum;
   isFound: boolean;
+  isClosed: boolean;
   category: string;
   itemImg?: string;
   date?: string;
@@ -41,6 +42,10 @@ const itemSchema = new Schema({
   //   default: "lost",
   // },
   isFound: {
+    type: Boolean,
+    default: false,
+  },
+  isClosed: {
     type: Boolean,
     default: false,
   },
