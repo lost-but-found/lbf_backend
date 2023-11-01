@@ -4,6 +4,7 @@ export interface INotification extends Document {
   title: string;
   content: string;
   isRead: boolean;
+  isForEveryone: boolean;
   type: string;
   user: Types.ObjectId;
   createdAt: Date;
@@ -14,6 +15,7 @@ const notificationSchema = new mongoose.Schema<INotification>({
   title: String,
   content: String,
   isRead: { type: Boolean, default: false },
+  isForEveryone: { type: Boolean, default: false },
   type: String,
   user: { type: Schema.Types.ObjectId, ref: "User" },
   createdAt: Date,

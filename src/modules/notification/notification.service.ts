@@ -64,16 +64,29 @@ class NotificationService {
   async sendPushNotification(
     title: string,
     body: string,
-    userDeviceToken: string
+    userDeviceToken: string,
+    user: string
   ) {
+    const notification = await NotificationModel.create({
+      title,
+      content: body,
+      user,
+    });
     FCM.sendPushNotificationToUser(userDeviceToken, title, body);
   }
 
   async sendGlobalPushNotification(
     title: string,
     body: string,
-    userDeviceTokens: string[]
+    userDeviceTokens: string[],
+    user: string
   ) {
+    const notification = await NotificationModel.create({
+      title,
+      content: body,
+      user,
+      isForEveryone: true,
+    });
     // FCM.sendPushNotificationToGeneral(title, body);
   }
 }
