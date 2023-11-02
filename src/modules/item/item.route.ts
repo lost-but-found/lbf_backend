@@ -37,6 +37,7 @@ ItemRouter.delete(
 );
 
 ItemRouter.get("/:id", isAuth, ItemController.getItem);
+ItemRouter.delete("/:id", isAuth, ItemController.deleteItem);
 ItemRouter.post("/:id/claim", isAuth, ItemController.claimItem);
 ItemRouter.post("/:id/unclaim", isAuth, ItemController.claimItem);
 ItemRouter.post("/:id/like", isAuth, ItemController.likeItem);

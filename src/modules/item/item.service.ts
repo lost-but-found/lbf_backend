@@ -446,6 +446,22 @@ class ItemService {
       throw new Error("Failed to unlike item.");
     }
   }
+
+  async deleteItem(itemId: string, userId: string) {
+    try {
+      const deletedItem = await ItemModel.findOneAndDelete({
+        _id: itemId,
+        user: userId,
+      });
+
+      console.log({ deletedItem });
+      return {
+        message: "Item deleted successfully.",
+      };
+    } catch (error) {
+      throw new Error("Failed to delete comment.");
+    }
+  }
 }
 
 export default new ItemService();

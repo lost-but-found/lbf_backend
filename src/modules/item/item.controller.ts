@@ -520,6 +520,39 @@ class ItemController {
       });
     }
   }
+
+  async deleteItem(req: Request, res: Response) {
+    try {
+      const itemId = req.params.id; // Assuming you pass the item ID in the request
+      const userId = req.userId; // Assuming you have user information in the request
+
+      // Delete the item using the ItemService
+      const deleteResult = await ItemService.deleteItem(itemId, userId);
+
+      if (deleteResult) {
+        return sendResponse({
+          res,
+          status: StatusCodes.OK,
+          message: "Item deleted successfully.",
+          success: true,
+        });
+      } else {
+        return sendResponse({
+          res,
+          status: StatusCodes.NOT_FOUND,
+          message: "Item not found or you don't have permission to delete it.",
+          success: false,
+        });
+      }
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: error.message || "Failed to delete item.",
+        success: false,
+      });
+    }
+  }
 }
 
 export default new ItemController();
