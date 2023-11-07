@@ -101,6 +101,7 @@ class ItemService {
             createdAt: 1,
             poster: 1,
             claimedBy: 1,
+            isClosed: 1,
             isBookmarked: { $in: ["$_id", "$currentUserDetails.bookmarked"] },
             likeCount: { $size: "$userLikes" }, // Count the likes
             isLiked: {
