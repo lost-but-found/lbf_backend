@@ -460,7 +460,7 @@ class ItemService {
         message: "Item deleted successfully.",
       };
     } catch (error) {
-      throw new Error("Failed to delete comment.");
+      throw new Error("Failed to delete item.");
     }
   }
 }
