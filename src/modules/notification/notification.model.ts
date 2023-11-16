@@ -7,8 +7,8 @@ export interface INotification extends Document {
   isForEveryone: boolean;
   type: string;
   user: Types.ObjectId;
-  createdAt: Date;
-  updatedAt: Date;
+  updated_at: Date;
+  created_at: Date;
   action?: string; // Type of action (e.g., "like", "comment")
   actionPayload?: any; // Additional data for handling the action
   link?: string; // URL or identifier of the related resource
@@ -21,12 +21,12 @@ const notificationSchema = new mongoose.Schema<INotification>({
   isForEveryone: { type: Boolean, default: false },
   type: String,
   user: { type: Schema.Types.ObjectId, ref: "User" },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
   action: String,
   actionPayload: Schema.Types.Mixed,
   link: String,
-});
+},  {
+  timestamps: true,
+},);
 
 const NotificationModel = mongoose.model<INotification>(
   "Notification",

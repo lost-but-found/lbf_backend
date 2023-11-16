@@ -23,10 +23,10 @@ const commentSchema = new Schema<IComment>({
     ref: "Item",
     required: true,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+
+},
+{
+  timestamps: true,
+},);
 
 export const CommentModel: Model<IComment> = model("Comment", commentSchema);
