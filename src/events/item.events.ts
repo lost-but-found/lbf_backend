@@ -15,7 +15,12 @@ export default function setupItemEvents() {
       title,
       body,
       userDeviceToken,
-      userId
+      userId,
+      EventEmitterEvents.ITEM_CREATED,
+      {
+        item_id: eventData.itemId,
+        id: eventData.itemId,
+      }
     );
   });
   eventEmitter.on(EventEmitterEvents.ITEM_CLAIMED, async (eventData) => {
@@ -28,7 +33,12 @@ export default function setupItemEvents() {
       title,
       body,
       userDeviceToken,
-      userId
+      userId,
+      EventEmitterEvents.ITEM_CLAIMED,
+      {
+        item_id: eventData.itemId,
+        id: eventData.itemId,
+      }
     );
   });
 
@@ -43,7 +53,12 @@ export default function setupItemEvents() {
       title,
       body,
       userDeviceToken,
-      userId
+      userId,
+      EventEmitterEvents.ITEM_LIKED,
+      {
+        item_id: eventData.itemId,
+        id: eventData.itemId,
+      }
     );
   });
   eventEmitter.on(EventEmitterEvents.ITEM_COMMENTED_ON, async (eventData) => {
@@ -56,7 +71,12 @@ export default function setupItemEvents() {
       title,
       body,
       userDeviceToken,
-      userId
+      userId,
+      EventEmitterEvents.ITEM_COMMENTED_ON,
+      {
+        item_id: eventData.itemId,
+        id: eventData.commenterId,
+      }
     );
   });
 }

@@ -65,12 +65,16 @@ class NotificationService {
     title: string,
     body: string,
     userDeviceToken: string,
-    user: string
+    user: string,
+    type?: string,
+    meta?: any
   ) {
     const notification = await NotificationModel.create({
       title,
       content: body,
       user,
+      type,
+      meta,
     });
     FCM.sendPushNotificationToUser(userDeviceToken, title, body);
   }
