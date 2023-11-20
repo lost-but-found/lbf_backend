@@ -127,10 +127,7 @@ class ItemController {
   async getItem(req: Request, res: Response) {
     try {
       const itemId = req.params.id;
-      const item = await ItemService.getItemWithBookmarkStatus(
-        itemId,
-        req.userId
-      );
+      const item = await ItemService.getItemWithStats(itemId, req.userId);
 
       if (item) {
         return sendResponse({

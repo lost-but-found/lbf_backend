@@ -5,8 +5,9 @@ import { uploadImageToCloudinary } from "../../utils/cloudinary";
 import { EventEmitter, EventEmitterEvents } from "../../events";
 import { PipelineStage } from "mongoose";
 import { StatusCodes } from "http-status-codes";
-import { ItemLikeService } from "../itemLike";
+import { ItemLikeModel, ItemLikeService } from "../itemLike";
 import itemLikeService from "../itemLike/itemLike.service";
+import { ItemCommentModel } from "../itemComment";
 
 class ItemService {
   async getItems2(query: any, page: number, limit: number) {
@@ -261,35 +262,48 @@ class ItemService {
     }
   }
 
-  async getItemLocations() {
-    const locations = await ItemModel.distinct("location").exec();
-    return locations;
-  }
-
-  async getItemWithBookmarkStatus(itemId: string, currentUser: string) {
+  async getItemWithStats(itemId: string, userId: string) {
     try {
       const [item, user] = await Promise.all([
         ItemModel.findById(itemId).select("-searchText").exec(),
-        UserService.getUser(currentUser),
+        UserService.getUser(userId),
       ]);
-
       if (!item) {
         throw new Error("Item not found.");
       }
 
+      if (!user) {
+        throw new Error("Item not found.");
+      }
+
+      // Retrieve likes count, check if the user has liked the item, and retrieve comments count concurrently
+      const [likeCount, isLiked, commentCount] = await Promise.all([
+        ItemLikeModel.countDocuments({ item: itemId }),
+        ItemLikeModel.exists({ item: itemId, user: userId }),
+        ItemCommentModel.countDocuments({ item: itemId }),
+      ]);
+
       // Check if the current user has bookmarked the item
       const isBookmarked = user ? user.bookmarked.includes(itemId) : false;
 
-      // Add the isBookmarked property to the item
-      const itemWithBookmarkStatus = {
+      // Add likeCount, isLiked, and commentCount to the item object
+      const itemWithStats = {
         ...item.toObject(),
+        likeCount,
+        isLiked: isLiked ? true : false,
+        commentCount,
         isBookmarked,
       };
 
-      return itemWithBookmarkStatus;
+      return itemWithStats;
     } catch (error) {
       throw new Error("Failed to retrieve item.");
     }
+  }
+
+  async getItemLocations() {
+    const locations = await ItemModel.distinct("location").exec();
+    return locations;
   }
 
   async claimItem(userId: string, itemId: string) {
