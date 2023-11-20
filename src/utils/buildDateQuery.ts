@@ -1,22 +1,27 @@
-const buildDateQuery = (query: { date_from?: string; date_to?: string }) => {
-  const queryObj: any = {};
+import moment from "moment";
+// buildDateFilter function definition
+export default function buildDateFilter({
+  date_from,
+  date_to,
+}: {
+  date_from?: string;
+  date_to?: string;
+}): any {
+  const filter: any = {};
 
-  if (query?.date_from && query?.date_to) {
-    queryObj.createdAt = {
-      $gte: new Date(query?.date_from as string),
-      $lte: new Date(query?.date_to as string),
-    };
-  } else if (query?.date_from) {
-    queryObj.createdAt = {
-      $gte: new Date(query?.date_from as string),
-    };
-  } else if (query?.date_to) {
-    queryObj.createdAt = {
-      $lte: new Date(query?.date_to as string),
+  if (date_from) {
+    filter.date = {
+      ...filter.date,
+      $gte: moment(date_from).startOf("day").toDate(),
     };
   }
 
-  return queryObj;
-};
+  if (date_to) {
+    filter.date = {
+      ...filter.date,
+      $lte: moment(date_to).endOf("day").toDate(),
+    };
+  }
 
-export default buildDateQuery;
+  return filter;
+}

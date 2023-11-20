@@ -230,7 +230,7 @@ class ItemService {
         description,
         // type,
         isFound: isFound.trim() === "true",
-        date,
+        date: new Date(date),
         time,
         category,
         location,

@@ -23,67 +23,70 @@ export interface IItem extends Document {
   created_at: Date;
 }
 
-const itemSchema = new Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  description: {
-    type: String,
-  },
-  images: [{ type: String }],
-  category: {
-    type: String,
+const itemSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+    },
+    images: [{ type: String }],
+    category: {
+      type: String,
 
-    required: true,
-  },
-  // type: {
-  //   type: String,
-  //   // Use ItemTypeEnum as the enum values
-  //   enum: Object.values(ItemTypeEnum),
-  //   default: "lost",
-  // },
-  isFound: {
-    type: Boolean,
-    default: false,
-  },
-  isClosed: {
-    type: Boolean,
-    default: false,
-  },
-  date: {
-    type: String,
-  },
-  time: {
-    type: String,
-  },
-  location: {
-    type: String,
-  },
-  additional_description: {
-    type: String,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+      required: true,
+    },
+    // type: {
+    //   type: String,
+    //   // Use ItemTypeEnum as the enum values
+    //   enum: Object.values(ItemTypeEnum),
+    //   default: "lost",
+    // },
+    isFound: {
+      type: Boolean,
+      default: false,
+    },
+    isClosed: {
+      type: Boolean,
+      default: false,
+    },
+    date: {
+      type: Date,
+    },
+    time: {
+      type: String,
+    },
+    location: {
+      type: String,
+    },
+    additional_description: {
+      type: String,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
 
-  poster: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
+    poster: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    searchText: {
+      type: String,
+      default: "",
+    },
+    // An array of users who have tried to claim this item
+    claimedBy: {
+      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+      default: [],
+    },
   },
-  searchText: {
-    type: String,
-    default: "",
-  },
-  // An array of users who have tried to claim this item
-  claimedBy: {
-    type: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    default: [],
-  },
-},  {
-  timestamps: true,
-},);
+  {
+    timestamps: true,
+  }
+);
 
 // Define the virtual field 'type'
 itemSchema.virtual("type").get(function () {
