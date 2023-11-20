@@ -19,6 +19,8 @@ export interface IItem extends Document {
   poster?: string | Types.ObjectId;
   searchText: string;
   claimedBy: string[];
+  updated_at: Date;
+  created_at: Date;
 }
 
 const itemSchema = new Schema({
@@ -79,7 +81,9 @@ const itemSchema = new Schema({
     type: [{ type: Schema.Types.ObjectId, ref: "User" }],
     default: [],
   },
-});
+},  {
+  timestamps: true,
+},);
 
 // Define the virtual field 'type'
 itemSchema.virtual("type").get(function () {

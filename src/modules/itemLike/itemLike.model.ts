@@ -19,6 +19,8 @@ const likeSchema = new Schema<ILike>({
     ref: "Item",
     required: true,
   },
-});
+},  {
+  timestamps: true,
+},);
 
 export const LikeModel: Model<ILike> = model("Like", likeSchema);

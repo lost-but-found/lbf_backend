@@ -19,6 +19,8 @@ export interface IUser extends Document {
   deviceToken?: string;
   isOnline: boolean;
   lastSeen: Date;
+  updated_at: Date;
+  created_at: Date;
 }
 
 const userSchema = new Schema({
@@ -60,7 +62,11 @@ const userSchema = new Schema({
   deviceToken: String,
   isOnline: { type: Boolean, default: false },
   lastSeen: { type: Date, default: Date.now },
-});
+},
+  {
+    timestamps: true,
+  },
+);
 
 // module.exports = mongoose.model("User", userSchema);
 export default model<IUser>("User", userSchema);
