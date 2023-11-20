@@ -452,9 +452,9 @@ class ItemService {
     try {
       const deletedItem = await ItemModel.findOneAndDelete({
         _id: itemId,
-        user: userId,
+        poster: userId,
       });
-
+      if (!deletedItem) throw Error("Failed to delete");
       console.log({ deletedItem });
       return {
         message: "Item deleted successfully.",
