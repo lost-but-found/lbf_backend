@@ -35,6 +35,12 @@ const routes = (app: Application) => {
     express.static(path.join(__dirname, "profile-image"))
   );
 
+  // Serve the HTML file from the 'public' directory
+  app.get("/api/v1/dp", (req: Request, res: Response) => {
+    const htmlPath = path.join(__dirname, "..", "public", "dp.html");
+    res.sendFile(htmlPath);
+  });
+
   // Error handler for 404 - Page Not Found
   app.use((req: Request, res: Response, next) => {
     console.log("---- 404 error handler", req.originalUrl);
