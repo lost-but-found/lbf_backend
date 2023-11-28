@@ -1,0 +1,10 @@
+[{
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.example.lostbutfound",
+      "sha256_cert_fingerprints":
+      ["0E:3B:A0:53:C2:DC:AC:24:16:A9:03:3A:B1:B9:F7:A0:D9:91:02:62:8B:60:DD:57:12:28:8F:3B:91:D7:F2:49"]
+    }
+  }]
+  

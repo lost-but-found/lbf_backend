@@ -35,6 +35,9 @@ const routes = (app: Application) => {
     express.static(path.join(__dirname, "profile-image"))
   );
 
+  // Serve static files from the 'Profile Images' directory
+  app.use("/", express.static(path.join(__dirname, "../public/")));
+
   // Serve the HTML file from the 'public' directory
   app.get("/api/v1/dp", (req: Request, res: Response) => {
     const htmlPath = path.join(__dirname, "..", "public", "dp.html");
