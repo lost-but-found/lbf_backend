@@ -34,6 +34,6 @@ export const CLOUDINARY_CLOUD_NAME = getEnv("CLOUDINARY_CLOUD_NAME")!;
 export const CLOUDINARY_API_KEY = getEnv("CLOUDINARY_API_KEY")!;
 export const CLOUDINARY_API_SECRET = getEnv("CLOUDINARY_API_SECRET")!;
 export const FIREBASE_CONFIG = getEnv("FIREBASE_CONFIG")!;
-// export const FIREBASE_DATABASE_URL = getEnv("FIREBASE_DATABASE_URL")!;
+export const PAYSTACK_SECRET_KEY = getEnv("PAYSTACK_SECRET_KEY")!;
 // export const STORAGE_URL = getEnv("STORAGE_URL")!;
 // export const STORAGE_KEY = getEnv("STORAGE_KEY")!;
