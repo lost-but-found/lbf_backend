@@ -2,6 +2,7 @@ import crypto from "crypto";
 import PaymentModel, { IPayment } from "./payment.model";
 import { StatusCodes } from "http-status-codes";
 import paystack from "../../utils/paystack";
+import { PaymentStatus } from ".";
 
 class PaymentService {
   async getPayments(userId: string, query: any, page: number, limit: number) {
@@ -57,9 +58,19 @@ class PaymentService {
 
   async getPayment(paymentId: string) {
     try {
-      return await PaymentModel.findById(paymentId)
-        .select("-searchText")
-        .exec();
+      return await PaymentModel.findById(paymentId).exec();
+    } catch (error) {
+      throw new Error("Failed to retrieve payment.");
+    }
+  }
+
+  async verifyPayment({ userId, postId }: { userId: string; postId: string }) {
+    try {
+      return await PaymentModel.findOne({
+        post: postId,
+        user: userId,
+        status: PaymentStatus.COMPLETED,
+      }).exec();
     } catch (error) {
       throw new Error("Failed to retrieve payment.");
     }
@@ -75,16 +86,27 @@ class PaymentService {
     if (hash == signature) {
       return;
     }
+
+    console.log({ event });
+
+    const payment = await PaymentModel.findById("");
+
+    if (!payment) {
+      return;
+    }
     // Handle the event
     switch (event.type) {
       case "charge.success":
         // const paymentIntent = event.data.object;
-        // Handle successful payment
+        payment.status = PaymentStatus.COMPLETED;
         break;
       case "payment_intent.payment_failed":
         // Handle failed payment
+        payment.status = PaymentStatus.FAILED;
         break;
     }
+
+    await payment.save();
 
     return true;
   }

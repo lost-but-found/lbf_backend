@@ -118,6 +118,34 @@ class PaymentController {
     }
   }
 
+  async verifyPayment(req: Request, res: Response) {
+    try {
+      const { postId, userId } = req.params;
+      const payment = await PaymentService.verifyPayment({
+        postId,
+        userId,
+      });
+
+      if (payment) {
+        return sendResponse({
+          res,
+          status: StatusCodes.OK,
+          message: "Payment retrieved!",
+          data: payment,
+          success: true,
+        });
+      }
+    } catch (error: any) {
+      return sendResponse({
+        res,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: "Payment not retrieved!",
+        error: error,
+        success: false,
+      });
+    }
+  }
+
   async updatePaymentStatus(req: Request, res: Response) {
     const sig = req.headers["x-paystack-signature"] as string;
 
