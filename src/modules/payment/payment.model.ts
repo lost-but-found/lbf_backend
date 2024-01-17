@@ -5,7 +5,7 @@ import { PaymentStatus } from "./payment.type";
 
 export interface IPayment extends Document {
   user: string | Types.ObjectId;
-  post: string | Types.ObjectId;
+  item: string | Types.ObjectId;
   email: string;
   paymentUrl: string;
   amount?: number;
@@ -20,7 +20,7 @@ const paymentSchema = new Schema<IPayment>({
     required: true,
   },
 
-  post: {
+  item: {
     type: Schema.Types.ObjectId,
     ref: "Post",
     required: true,

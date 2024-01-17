@@ -3,6 +3,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import PaymentService from "./payment.service";
 import mongoose from "mongoose";
+import { CreatePaymentRequestInput } from "./schemas/create-payment-request.schema";
 
 class PaymentController {
   async getPayments(req: Request, res: Response) {
@@ -91,10 +92,10 @@ class PaymentController {
 
   async createPayment(req: Request, res: Response) {
     try {
-      const { email, postId, userId } = req.body;
+      const userId = req.userId;
+      const { itemId } = req.body as CreatePaymentRequestInput;
       const payment = await PaymentService.createPayment({
-        email,
-        postId,
+        itemId,
         userId,
       });
 
@@ -120,9 +121,9 @@ class PaymentController {
 
   async verifyPayment(req: Request, res: Response) {
     try {
-      const { postId, userId } = req.params;
+      const { itemId, userId } = req.params;
       const payment = await PaymentService.verifyPayment({
-        postId,
+        itemId,
         userId,
       });
 

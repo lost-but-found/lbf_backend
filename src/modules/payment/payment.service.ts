@@ -3,6 +3,8 @@ import PaymentModel, { IPayment } from "./payment.model";
 import { StatusCodes } from "http-status-codes";
 import paystack from "../../utils/paystack";
 import { PaymentStatus } from ".";
+import { ItemService } from "../item";
+import { UserService } from "../user";
 
 class PaymentService {
   async getPayments(userId: string, query: any, page: number, limit: number) {
@@ -25,28 +27,27 @@ class PaymentService {
     }
   }
 
-  async createPayment({
-    userId,
-    email,
-    postId,
-  }: {
-    userId: string;
-    postId: string;
-    email: string;
-  }) {
+  async createPayment({ userId, itemId }: { userId: string; itemId: string }) {
     try {
       const amount = 1000;
+      const [item, user] = await Promise.all([
+        ItemService.getItem(itemId),
+        UserService.getUser(userId),
+      ]);
+      if (!item || !user) {
+        return;
+      }
       const paymentUrl = await paystack.initializeTransaction({
         amount: 1000,
-        email,
-        post: postId,
+        email: user.email,
+        item: itemId,
         user: userId,
       });
       const result: IPayment = await PaymentModel.create({
         user: userId,
         amount: amount * 10,
-        email,
-        post: postId,
+        email: user.email,
+        item: itemId,
         paymentUrl,
       });
 
@@ -64,10 +65,10 @@ class PaymentService {
     }
   }
 
-  async verifyPayment({ userId, postId }: { userId: string; postId: string }) {
+  async verifyPayment({ userId, itemId }: { userId: string; itemId: string }) {
     try {
       return await PaymentModel.findOne({
-        post: postId,
+        item: itemId,
         user: userId,
         status: PaymentStatus.COMPLETED,
       }).exec();

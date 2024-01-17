@@ -1,9 +1,17 @@
 import express, { Router } from "express";
 import PaymentController from "./payment.controller";
+import validateRequest from "../../middleware/validateRequest";
+import { createPaymentRequestSchema } from "./schemas/create-payment-request.schema";
+import { isAuth } from "../auth/auth.middleware";
 
 const PaymentRouter: Router = express.Router();
 
-PaymentRouter.post("/", PaymentController.createPayment);
+PaymentRouter.post(
+  "/",
+  isAuth,
+  validateRequest(createPaymentRequestSchema),
+  PaymentController.createPayment
+);
 
 PaymentRouter.get("/verify/:userId/:postId", PaymentController.verifyPayment);
 

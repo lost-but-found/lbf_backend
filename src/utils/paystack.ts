@@ -14,12 +14,12 @@ class Paystack {
   async initializeTransaction({
     email,
     amount,
-    post,
+    item,
     user,
   }: {
     email: string;
     amount: number;
-    post: string;
+    item: string;
     user: string;
   }) {
     try {
@@ -29,7 +29,7 @@ class Paystack {
           email: email,
           amount: amount * 100, // Paystack amount is in kobo
           metadata: {
-            post,
+            item,
             user,
           },
         },
