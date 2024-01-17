@@ -15,10 +15,9 @@ PaymentRouter.post(
 
 PaymentRouter.get("/verify/:userId/:postId", PaymentController.verifyPayment);
 
-PaymentRouter.get(
-  "/confirm-payment-webhook",
-  PaymentController.updatePaymentStatus
-);
+PaymentRouter.get("/confirm-payment", PaymentController.updatePaymentStatus);
+
+PaymentRouter.get("/webhook", PaymentController.updatePaymentStatus);
 
 PaymentRouter.get("/:id", PaymentController.getPayment);
 

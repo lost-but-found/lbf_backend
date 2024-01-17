@@ -30,7 +30,7 @@ router.use("/payments", PaymentRouter);
 const routes = (app: Application) => {
   app.use("/api/v1", router);
   app.use("/item-image", express.static(path.join(__dirname, "..", "tmp")));
-
+  app.use("/api/paystack", PaymentRouter);
   // Serve static files from the 'Profile Images' directory
   app.use(
     "/profile-image",
