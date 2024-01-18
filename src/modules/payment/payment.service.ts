@@ -91,7 +91,7 @@ class PaymentService {
     }
   ) {
     const hash = paystack.verifyHash(event);
-    if (hash == signature) {
+    if (hash !== signature) {
       return;
     }
 
