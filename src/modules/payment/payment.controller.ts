@@ -93,10 +93,11 @@ class PaymentController {
   async createPayment(req: Request, res: Response) {
     try {
       const userId = req.userId;
-      const { itemId } = req.body as CreatePaymentRequestInput;
+      const { itemId, amount } = req.body as CreatePaymentRequestInput;
       const payment = await PaymentService.createPayment({
         itemId,
         userId,
+        amount: amount ?? 500,
       });
 
       if (payment) {
@@ -158,7 +159,7 @@ class PaymentController {
 
   async updatePaymentStatus(req: Request, res: Response) {
     const sig = req.headers["x-paystack-signature"] as string;
-
+    console.log("called");
     try {
       PaymentService.updatePaymentStatus(sig, req.body);
       // return sendResponse({

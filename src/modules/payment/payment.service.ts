@@ -27,9 +27,17 @@ class PaymentService {
     }
   }
 
-  async createPayment({ userId, itemId }: { userId: string; itemId: string }) {
+  async createPayment({
+    userId,
+    itemId,
+    amount,
+  }: {
+    userId: string;
+    itemId: string;
+    amount: number;
+  }) {
     try {
-      const amount = 1000;
+      const checkedAmount = Math.max(500, amount);
       const [item, user] = await Promise.all([
         ItemService.getItem(itemId),
         UserService.getUser(userId),
@@ -38,14 +46,14 @@ class PaymentService {
         return;
       }
       const paymentUrl = await paystack.initializeTransaction({
-        amount: 1000,
+        amount: checkedAmount,
         email: user.email,
         item: itemId,
         user: userId,
       });
       const result: IPayment = await PaymentModel.create({
         user: userId,
-        amount: amount * 10,
+        amount: checkedAmount * 10,
         email: user.email,
         item: itemId,
         paymentUrl,
@@ -65,20 +73,23 @@ class PaymentService {
     }
   }
 
-  async verifyPayment({ userId, itemId }: { userId: string; itemId: string }) {
+  async verifyPayment({
+    userId,
+    itemId,
+    status,
+  }: {
+    userId: string;
+    itemId: string;
+    status?: PaymentStatus;
+  }) {
     try {
       return await PaymentModel.findOne({
         item: itemId,
         user: userId,
-        $or: [
-          {
-            status: PaymentStatus.COMPLETED,
-          },
-          {
-            status: PaymentStatus.PROCESSING,
-          },
-        ],
-      }).exec();
+        ...(status ? { status } : {}),
+      })
+        .sort("asc")
+        .exec();
     } catch (error) {
       throw new Error("Failed to retrieve payment.");
     }
@@ -92,7 +103,7 @@ class PaymentService {
   ) {
     const hash = paystack.verifyHash(event);
     if (hash !== signature) {
-      return;
+      return false;
     }
 
     console.log({ event });
@@ -100,7 +111,7 @@ class PaymentService {
     const payment = await PaymentModel.findById("");
 
     if (!payment) {
-      return;
+      return false;
     }
     // Handle the event
     switch (event.type) {

@@ -1,4 +1,5 @@
-import ItemModel from "./item.model";
+import { PaymentStatus } from "./../payment/payment.type";
+import ItemModel, { IItem } from "./item.model";
 import { CategoryModel } from "../category";
 import { UserModel, UserService } from "../user";
 import { uploadImageToCloudinary } from "../../utils/cloudinary";
@@ -8,6 +9,7 @@ import { StatusCodes } from "http-status-codes";
 import { ItemLikeModel, ItemLikeService } from "../itemLike";
 import itemLikeService from "../itemLike/itemLike.service";
 import { ItemCommentModel } from "../itemComment";
+import { PaymentService } from "../payment";
 
 class ItemService {
   async getItems2(query: any, page: number, limit: number) {
@@ -256,7 +258,11 @@ class ItemService {
 
   async getItem(itemId: string) {
     try {
-      return await ItemModel.findById(itemId).select("-searchText").exec();
+      const item = await ItemModel.findById(itemId)
+        .select("-searchText")
+        .exec();
+
+      return item;
     } catch (error) {
       throw new Error("Failed to retrieve item.");
     }
@@ -264,9 +270,14 @@ class ItemService {
 
   async getItemWithStats(itemId: string, userId: string) {
     try {
-      const [item, user] = await Promise.all([
+      const [item, user, payment] = await Promise.all([
         ItemModel.findById(itemId).select("-searchText").exec(),
         UserService.getUser(userId),
+        PaymentService.verifyPayment({
+          itemId,
+          userId,
+          status: PaymentStatus.COMPLETED,
+        }),
       ]);
       if (!item) {
         throw new Error("Item not found.");
@@ -291,6 +302,7 @@ class ItemService {
         ...item.toObject(),
         likeCount,
         isLiked: isLiked ? true : false,
+        isPaid: !!payment ? true : false,
         commentCount,
         isBookmarked,
       };
