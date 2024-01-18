@@ -70,7 +70,14 @@ class PaymentService {
       return await PaymentModel.findOne({
         item: itemId,
         user: userId,
-        // status: PaymentStatus.COMPLETED,
+        $or: [
+          {
+            status: PaymentStatus.COMPLETED,
+          },
+          {
+            status: PaymentStatus.PROCESSING,
+          },
+        ],
       }).exec();
     } catch (error) {
       throw new Error("Failed to retrieve payment.");
