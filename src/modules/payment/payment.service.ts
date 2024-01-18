@@ -105,6 +105,8 @@ class PaymentService {
         // Handle failed payment
         payment.status = PaymentStatus.FAILED;
         break;
+      default:
+        payment.status = PaymentStatus.FAILED;
     }
 
     await payment.save();

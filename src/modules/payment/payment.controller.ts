@@ -121,7 +121,8 @@ class PaymentController {
 
   async verifyPayment(req: Request, res: Response) {
     try {
-      const { itemId, userId } = req.params;
+      const userId = req.userId;
+      const { itemId } = req.params;
       const payment = await PaymentService.verifyPayment({
         itemId,
         userId,
@@ -134,6 +135,14 @@ class PaymentController {
           message: "Payment retrieved!",
           data: payment,
           success: true,
+        });
+      } else {
+        return sendResponse({
+          res,
+          status: StatusCodes.NOT_FOUND,
+          message: "No Payment found",
+          data: payment,
+          success: false,
         });
       }
     } catch (error: any) {

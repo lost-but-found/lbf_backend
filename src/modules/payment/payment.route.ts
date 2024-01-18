@@ -13,7 +13,7 @@ PaymentRouter.post(
   PaymentController.createPayment
 );
 
-PaymentRouter.get("/verify/:userId/:postId", PaymentController.verifyPayment);
+PaymentRouter.get("/verify/:itemId", isAuth, PaymentController.verifyPayment);
 
 PaymentRouter.get("/confirm-payment", PaymentController.updatePaymentStatus);
 
