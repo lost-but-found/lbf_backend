@@ -276,7 +276,7 @@ class ItemService {
         PaymentService.verifyPayment({
           itemId,
           userId,
-          status: PaymentStatus.COMPLETED,
+          // status: PaymentStatus.COMPLETED,
         }),
       ]);
       if (!item) {
@@ -302,7 +302,7 @@ class ItemService {
         ...item.toObject(),
         likeCount,
         isLiked: isLiked ? true : false,
-        isPaid: !!payment ? true : false,
+        paymentStatus: !!payment ? payment.status : PaymentStatus.NOT_MADE,
         commentCount,
         isBookmarked,
       };

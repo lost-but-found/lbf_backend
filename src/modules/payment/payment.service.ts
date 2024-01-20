@@ -87,10 +87,9 @@ class PaymentService {
         item: itemId,
         user: userId,
         ...(status ? { status } : {}),
-      })
-        .sort("asc")
-        .exec();
+      }).exec();
     } catch (error) {
+      console.log({ error });
       throw new Error("Failed to retrieve payment.");
     }
   }
