@@ -16,11 +16,13 @@ class Paystack {
     amount,
     item,
     user,
+    payment,
   }: {
     email: string;
     amount: number;
     item: string;
     user: string;
+    payment: string;
   }) {
     try {
       const response = await axios.post(
@@ -31,6 +33,7 @@ class Paystack {
           metadata: {
             item,
             user,
+            payment,
           },
         },
         {

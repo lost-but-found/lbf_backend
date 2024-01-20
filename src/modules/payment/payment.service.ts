@@ -41,25 +41,31 @@ class PaymentService {
       const [item, user] = await Promise.all([
         ItemService.getItem(itemId),
         UserService.getUser(userId),
+        // PaymentModel.findOne()
       ]);
       if (!item || !user) {
         return;
       }
+
+      const newPayment = new PaymentModel({
+        user: userId,
+        amount: checkedAmount * 10,
+        email: user.email,
+        item: itemId,
+        // paymentUrl,
+      });
+
       const paymentUrl = await paystack.initializeTransaction({
         amount: checkedAmount,
         email: user.email,
         item: itemId,
         user: userId,
+        payment: newPayment.id,
       });
-      const result: IPayment = await PaymentModel.create({
-        user: userId,
-        amount: checkedAmount * 10,
-        email: user.email,
-        item: itemId,
-        paymentUrl,
-      });
+      newPayment.paymentUrl = paymentUrl;
+      await newPayment.save();
 
-      return result;
+      return newPayment;
     } catch (error) {
       throw new Error("Failed to add payment.");
     }
@@ -105,7 +111,14 @@ class PaymentService {
   async updatePaymentStatus(
     signature: string,
     event: {
-      type: string;
+      event: string;
+      data: {
+        metadata: {
+          item: string;
+          user: string;
+          payment: string;
+        };
+      };
     }
   ) {
     const hash = paystack.verifyHash(event);
@@ -113,15 +126,15 @@ class PaymentService {
       return false;
     }
 
-    console.log({ event });
+    console.log({ event: event.data.metadata });
 
-    const payment = await PaymentModel.findById("");
+    const payment = await PaymentModel.findById(event.data.metadata.payment);
 
     if (!payment) {
       return false;
     }
     // Handle the event
-    switch (event.type) {
+    switch (event.event) {
       case "charge.success":
         // const paymentIntent = event.data.object;
         payment.status = PaymentStatus.COMPLETED;
