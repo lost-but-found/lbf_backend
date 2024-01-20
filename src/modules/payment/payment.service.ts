@@ -83,11 +83,19 @@ class PaymentService {
     status?: PaymentStatus;
   }) {
     try {
-      return await PaymentModel.findOne({
+      const payment = await PaymentModel.findOne({
         item: itemId,
         user: userId,
         ...(status ? { status } : {}),
       }).exec();
+
+      if (payment) {
+        return payment;
+      } else {
+        return {
+          status: PaymentStatus.NOT_MADE,
+        };
+      }
     } catch (error) {
       console.log({ error });
       throw new Error("Failed to retrieve payment.");
