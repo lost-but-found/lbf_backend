@@ -1,15 +1,9 @@
-[
- {
-    "relation": [
-      "delegate_permission/common.handle_all_urls"
-    ],
+[{
+    "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
       "package_name": "com.lostbutfound.lostbutfound",
-      "sha256_cert_fingerprints": [
-        "25:BD:88:BE:73:29:39:C5:64:79:31:F1:70:56:CB:40:1B:9A:DA:94:80:5C:48:63:D1:30:52:C1:96:B2:7A:67"
-      ]
+      "sha256_cert_fingerprints": ["25:BD:88:BE:73:29:39:C5:64:79:31:F1:70:56:CB:40:1B:9A:DA:94:80:5C:48:63:D1:30:52:C1:96:B2:7A:67"]
     }
-  }
-]
+  }]
   
