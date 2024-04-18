@@ -47,15 +47,15 @@ const routes = (app: Application) => {
   });
 
   // Error handler for 404 - Page Not Found
-  app.use((req: Request, res: Response, next) => {
-    console.log("---- 404 error handler", req.originalUrl);
-    sendResponse({
-      res,
-      status: StatusCodes.NOT_FOUND,
-      message: "Sorry, page not found!",
-      success: false,
-    });
-  });
+  // app.use((req: Request, res: Response, next) => {
+  //   console.log("---- 404 error handler", req.originalUrl);
+  //   sendResponse({
+  //     res,
+  //     status: StatusCodes.NOT_FOUND,
+  //     message: "Sorry, page not found!, " + req.originalUrl,
+  //     success: false,
+  //   });
+  // });
 
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     if (err) {
