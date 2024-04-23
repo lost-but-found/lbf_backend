@@ -302,8 +302,7 @@ const sendEmailOTP = async (req: Request, res: Response) => {
       });
     }
 
-  let OTP = AuthService.generateOTPService();
-  // let OTP = await OTPTokenService.generateOTP(user._id, "emailVerification");
+    let OTP = await OTPTokenService.generateOTP(user._id, "emailVerification");
     console.log({ OTP });
 
     //Update OTP of user
