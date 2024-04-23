@@ -203,7 +203,7 @@ const register = async (req: Request, res: Response) => {
     //hash the password
     const hashedPwd = await bcrypt.hash(password, 10);
 
-    let OTP = AuthService.generateOTPService();
+
 
     //create and store the new user
     const result = await UserModel.create({
@@ -216,14 +216,10 @@ const register = async (req: Request, res: Response) => {
     });
     console.log(result);
 
-    const msg = {
-      to: email,
-      from: "lostbutfounditemsapp@gmail.com",
-      subject: "LostButFound Verification Code",
-      text: `Your OTP code is ${OTP}`,
-    };
-    await sgMail.send(msg);
-    console.log(`OTP sent to ${email}`);
+    let OTP = await OTPTokenService.generateOTP(result._id, "emailVerification");
+    console.log({ OTP });
+
+    AuthService.sendOTPService(email, OTP);
 
     const { accessToken, refreshToken } = AuthService.generateJWTToken({
       _id: result._id,
